@@ -231,6 +231,18 @@ def generate_graphs(graphon_key, n):
             graph_prob = graphon_3(x)
         elif graphon_key == 4:
             graph_prob = graphon_4(x)
+        elif graphon_key == 5:
+            graph_prob = graphon_5(x)
+        elif graphon_key == 6:
+            graph_prob = graphon_6(x)
+        elif graphon_key == 7:
+            graph_prob = graphon_7(x)
+        elif graphon_key == 8:
+            graph_prob = graphon_8(x)
+        elif graphon_key == 9:
+            graph_prob = graphon_9(x)
+        elif graphon_key == 10:
+            graph_prob = graphon_10(x)
         else:
             print('Wrong key')
             exit()
@@ -271,7 +283,7 @@ def data_simulation(graphons, number_of_graphs=10, start=100, stop=1000):
 
 if __name__ == '__main__':
     enzymes = load_graph(name='ENZYMES', min_num_nodes=10)
-    simul_graphs = data_simulation([1, 2], )
+    simul_graphs = data_simulation([1, 2,3,4,5,6,7,8,9,10] )
 
     # plot adjacency matrix
     # plt.imshow(graph[0], cmap='hot')
