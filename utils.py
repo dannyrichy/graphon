@@ -12,12 +12,21 @@ from sklearn.neighbors import kneighbors_graph
 from scipy import sparse
 from scipy import linalg
 
+from graphons import *
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+
 def download_datasets():
-    dataset_links = ['http://www.chrsmrrs.com/graphkerneldatasets/ENZYMES.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip','https://www.chrsmrrs.com/graphkerneldatasets/OHSU.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/Peking_1.zip','https://www.chrsmrrs.com/graphkerneldatasets/KKI.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/PROTEINS.zip']
+    dataset_links = ['http://www.chrsmrrs.com/graphkerneldatasets/ENZYMES.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/OHSU.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/Peking_1.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/KKI.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/PROTEINS.zip']
     for l in dataset_links:
         r = requests.get(l)
         z = zipfile.ZipFile(io.BytesIO(r.content))
@@ -61,36 +70,40 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     print('max num of nodes is ', max_nodes)
     print('total graphs ', len(graphs))
     print('histogram of number of nodes in ', name)
-    #print(all_nodes)
+    # print(all_nodes)
     plt.hist(all_nodes)
     plt.title(f'Number of nodes for each graph in {name}')
     plt.show()
     return graphs
 
+
 def kmeans_dist(dist, num_clusters=2):
-    w,v = torch.eig(dist,eigenvectors=True)
-    w_real = w[:,0] #symmetric matrix so no need to bother about the complex part
+    w, v = torch.eig(dist, eigenvectors=True)
+    w_real = w[:, 0]  # symmetric matrix so no need to bother about the complex part
     sorted_w = torch.argsort(-torch.abs(w_real))
     to_pick_idx = sorted_w[:num_clusters]
-    eig_vec = v[:,to_pick_idx]
+    eig_vec = v[:, to_pick_idx]
     eig_vec = eig_vec.cpu().detach().numpy()
     kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(eig_vec)
     return kmeans.labels_
 
-#hungarian algorithm
+
+# hungarian algorithm
 def _make_cost_m(cm):
     s = np.max(cm)
     return (- cm + s)
 
+
 def error(gt_real, labels):
     cm = confusion_matrix(gt_real, labels)
-    indexes = linear_assignment(_make_cost_m(cm)) #Hungarian algorithm
+    indexes = linear_assignment(_make_cost_m(cm))  # Hungarian algorithm
     js = [e[1] for e in sorted(indexes, key=lambda x: x[0])]
     cm2 = cm[:, js]
     err = 1 - np.trace(cm2) / np.sum(cm2)
     return err
 
-#spectral clustering
+
+# spectral clustering
 def generate_graph_laplacian(df, nn):
     """Generate graph Laplacian from data."""
     # Adjacency Matrix.
@@ -130,86 +143,6 @@ def spectral_clustering(affinity_mat, num_clusters=3):
 
     return labels
 
-#graphons for simulated data
-def graphon_1(x):
-    'w(u,v) = u * v'
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = u * v
-    return graphon
-
-def graphon_2(x):
-    'w(u,v) = exp{-(u^0.7 + v^0.7))}'
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.exp(-(torch.pow(u, 0.7) + torch.pow(v, 0.7)))
-    return graphon
-
-def graphon_3(x):
-    'w(u,v) = (1/4) * [u^2 + v^2 + u^(1/2) + v^(1/2)]'
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = 0.25 * (torch.pow(u, 2) + torch.pow(v, 2) + torch.pow(u, 0.5) + torch.pow(u, 0.5))
-    return graphon
-
-def graphon_4(x):
-    'w(u,v) = 0.5 * (u + v)'
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = 0.5 * (u + v)
-    return graphon
-
-def graphon_5(x):
-    'w(u,v) = 1 / (1 + exp(-10 * (u^2 + v^2)))'
-    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = 1 / (1 + torch.exp(-10 * (torch.pow(u, 2) + torch.pow(v, 2))))
-    return graphon
-
-def graphon_6(x):
-    'w(u,v) = |u - v|'
-    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.abs(u - v)
-    return graphon
-
-def graphon_7(x):
-    'w(u,v) = 1 / (1 + exp(-(max(u,v)^2 + min(u,v)^4)))'
-    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = 1 / (1 + torch.exp(-(torch.pow(torch.max(u, v), 2) + torch.pow(torch.min(u, v), 4))))
-    return graphon
-
-def graphon_8(x):
-    'w(u,v) = exp(-max(u, v)^(3/4))'
-    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.exp(-torch.pow(torch.max(u, v), 0.75))
-    return graphon
-
-def graphon_9(x):
-    'w(u,v) = exp(-0.5 * (min(u, v) + u^0.5 + v^0.5))'
-    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.exp(-0.5 * (torch.min(u, v) + torch.pow(u, 0.5) + torch.pow(v, 0.5)))
-    return graphon
-
-def graphon_10(x):
-    'w(u,v) = log(1 + 0.5 * max(u, v))'
-    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.log(1 + 0.5 * torch.max(u, v))
-    return graphon
 
 def generate_graphs(graphon_key, n):
     '''
@@ -281,12 +214,11 @@ def data_simulation(graphons, number_of_graphs=10, start=100, stop=1000):
     print('true labels ', labels)
     return graphs, labels
 
+
 if __name__ == '__main__':
     enzymes = load_graph(name='ENZYMES', min_num_nodes=10)
-    simul_graphs = data_simulation([1, 2,3,4,5,6,7,8,9,10] )
+    simul_graphs = data_simulation([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
     # plot adjacency matrix
     # plt.imshow(graph[0], cmap='hot')
     # plt.show()
-
-
