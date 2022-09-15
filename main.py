@@ -1,8 +1,10 @@
-from utils import *
+from functools import reduce
 
-from node2vec import Node2Vec
 import networkx as nx
+from node2vec import Node2Vec
+
 from config import DOWNLOAD_DATA
+from utils import *
 
 
 def combine_datasets(li_dataset):
@@ -15,7 +17,7 @@ def combine_datasets(li_dataset):
     :return: Reduced datasets with labels
     :rtype: tuple
     """
-    result = reduce(lambda x,y: x+y, li_dataset)
+    result = reduce(lambda x, y: x + y, li_dataset)
     labels = np.array([i for i, dataset in enumerate(li_dataset) for _ in range(len(dataset))])
     return result, labels
 
