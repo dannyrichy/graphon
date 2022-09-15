@@ -45,3 +45,7 @@ def main():
 
     fb_github_reddit_deezer, gt_fb_github_reddit_deezer = combine_datasets([fb, github, reddit, deezer])
     # gt_fb_github_reddit_deezer
+
+
+if __name__ == '__main__':
+    main()
