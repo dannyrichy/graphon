@@ -18,15 +18,8 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def download_datasets():
-    dataset_links = ['http://www.chrsmrrs.com/graphkerneldatasets/ENZYMES.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/OHSU.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/Peking_1.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/KKI.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/PROTEINS.zip']
+    dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip','https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
+                     'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip']
     for l in dataset_links:
         r = requests.get(l)
         z = zipfile.ZipFile(io.BytesIO(r.content))
@@ -214,10 +207,6 @@ def data_simulation(graphons, number_of_graphs=10, start=100, stop=1000):
     print('true labels ', labels)
     return graphs, labels
 
-
-if __name__ == '__main__':
-    enzymes = load_graph(name='ENZYMES', min_num_nodes=10)
-    simul_graphs = data_simulation([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
 
     # plot adjacency matrix
     # plt.imshow(graph[0], cmap='hot')
