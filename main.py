@@ -2,6 +2,7 @@ from utils import *
 
 from node2vec import Node2Vec
 import networkx as nx
+from config import DOWNLOAD_DATA
 
 
 def combine_datasets(li_dataset):
@@ -11,7 +12,6 @@ def combine_datasets(li_dataset):
 
 
 def main():
-    DOWNLOAD_DATA = False
 
     if DOWNLOAD_DATA:
         download_datasets()
