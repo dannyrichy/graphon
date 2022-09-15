@@ -12,7 +12,10 @@ from sklearn.neighbors import kneighbors_graph
 from scipy import sparse
 from scipy import linalg
 
+from graphons import *
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def download_datasets():
     dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip','https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
@@ -60,36 +63,40 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     print('max num of nodes is ', max_nodes)
     print('total graphs ', len(graphs))
     print('histogram of number of nodes in ', name)
-    #print(all_nodes)
+    # print(all_nodes)
     plt.hist(all_nodes)
     plt.title(f'Number of nodes for each graph in {name}')
     plt.show()
     return graphs
 
+
 def kmeans_dist(dist, num_clusters=2):
-    w,v = torch.eig(dist,eigenvectors=True)
-    w_real = w[:,0] #symmetric matrix so no need to bother about the complex part
+    w, v = torch.eig(dist, eigenvectors=True)
+    w_real = w[:, 0]  # symmetric matrix so no need to bother about the complex part
     sorted_w = torch.argsort(-torch.abs(w_real))
     to_pick_idx = sorted_w[:num_clusters]
-    eig_vec = v[:,to_pick_idx]
+    eig_vec = v[:, to_pick_idx]
     eig_vec = eig_vec.cpu().detach().numpy()
     kmeans = KMeans(n_clusters=num_clusters, random_state=0).fit(eig_vec)
     return kmeans.labels_
 
-#hungarian algorithm
+
+# hungarian algorithm
 def _make_cost_m(cm):
     s = np.max(cm)
     return (- cm + s)
 
+
 def error(gt_real, labels):
     cm = confusion_matrix(gt_real, labels)
-    indexes = linear_assignment(_make_cost_m(cm)) #Hungarian algorithm
+    indexes = linear_assignment(_make_cost_m(cm))  # Hungarian algorithm
     js = [e[1] for e in sorted(indexes, key=lambda x: x[0])]
     cm2 = cm[:, js]
     err = 1 - np.trace(cm2) / np.sum(cm2)
     return err
 
-#spectral clustering
+
+# spectral clustering
 def generate_graph_laplacian(df, nn):
     """Generate graph Laplacian from data."""
     # Adjacency Matrix.
@@ -129,35 +136,6 @@ def spectral_clustering(affinity_mat, num_clusters=3):
 
     return labels
 
-#graphons for simulated data
-def graphon_1(x):
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = u * v
-    return graphon
-
-def graphon_2(x):
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.exp(-torch.pow(torch.max(u,v),0.75))
-    return graphon
-
-def graphon_3(x):
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.exp(-0.5* (torch.min(u,v) + torch.pow(u,0.5) + torch.pow(v,0.5)))
-    return graphon
-
-def graphon_4(x):
-    p = torch.zeros((x.shape[0],x.shape[0]), dtype=torch.float64).to(device=device)
-    u = p + x.reshape(1, -1)
-    v = p + x.reshape(-1, 1)
-    graphon = torch.abs(u-v)
-    return graphon
-
 
 def generate_graphs(graphon_key, n):
     '''
@@ -179,6 +157,18 @@ def generate_graphs(graphon_key, n):
             graph_prob = graphon_3(x)
         elif graphon_key == 4:
             graph_prob = graphon_4(x)
+        elif graphon_key == 5:
+            graph_prob = graphon_5(x)
+        elif graphon_key == 6:
+            graph_prob = graphon_6(x)
+        elif graphon_key == 7:
+            graph_prob = graphon_7(x)
+        elif graphon_key == 8:
+            graph_prob = graphon_8(x)
+        elif graphon_key == 9:
+            graph_prob = graphon_9(x)
+        elif graphon_key == 10:
+            graph_prob = graphon_10(x)
         else:
             print('Wrong key')
             exit()
@@ -221,5 +211,3 @@ def data_simulation(graphons, number_of_graphs=10, start=100, stop=1000):
     # plot adjacency matrix
     # plt.imshow(graph[0], cmap='hot')
     # plt.show()
-
-
