@@ -2,29 +2,31 @@ from utils import *
 
 from node2vec import Node2Vec
 import networkx as nx
-from pathlib import Path
+from config import DOWNLOAD_DATA
 
 
-def combine_datasets(dataset_names=[]):
-    result = []
-    size = 0
-    for dataset in dataset_names:
-        size += len(dataset)
-        result += dataset
+def combine_datasets(li_dataset):
+    """
+    Combining datasets
 
-    gt_result = []
+    :param li_dataset: list of datasets
+    :type li_dataset: list
 
-    label = 0
-    for dataset in dataset_names:
-        gt_result += [label] * len(dataset)
-        label += 1
-
-    return result, np.array(gt_result)
+    :return: Reduced datasets with labels
+    :rtype: tuple
+    """
+    result = reduce(lambda x,y: x+y, li_dataset)
+    labels = np.array([i for i, dataset in enumerate(li_dataset) for _ in range(len(dataset))])
+    return result, labels
 
 
 def main():
-    DOWNLOAD_DATA = False
+    """
+    Main function
 
+    :return:
+    :rtype:
+    """
     if DOWNLOAD_DATA:
         download_datasets()
 
