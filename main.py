@@ -6,13 +6,27 @@ from config import DOWNLOAD_DATA
 
 
 def combine_datasets(li_dataset):
+    """
+    Combining datasets
+
+    :param li_dataset: list of datasets
+    :type li_dataset: list
+
+    :return: Reduced datasets with labels
+    :rtype: tuple
+    """
     result = reduce(lambda x,y: x+y, li_dataset)
     labels = np.array([i for i, dataset in enumerate(li_dataset) for _ in range(len(dataset))])
     return result, labels
 
 
 def main():
+    """
+    Main function
 
+    :return:
+    :rtype:
+    """
     if DOWNLOAD_DATA:
         download_datasets()
 
