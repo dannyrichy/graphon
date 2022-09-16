@@ -2,11 +2,16 @@ from functools import reduce
 from pathlib import Path
 
 import networkx as nx
-from node2vec import Node2Vec
+from karateclub import Graph2Vec
 
 from config import DOWNLOAD_DATA
 from utils import *
 
+from tqdm import tqdm
+import pickle
+import os
+
+# %%
 
 def combine_datasets(li_dataset):
     """
@@ -55,40 +60,50 @@ def main():
     # gt_fb_github_reddit_deezer
 
 
-def node2vec(graph, emb_dir=None, savename=None, dimensions=64, walk_length=30, num_walks=200):
-    graph = nx.from_numpy_array(graph.numpy())
-    node2vec = Node2Vec(graph, dimensions=dimensions, walk_length=walk_length, num_walks=num_walks)
-
-    # saves the description of the parameters used for the embedding
-    with open(f'{emb_dir}/AA_emb_params.txt', 'w') as f:
-        f.write(f'dimensions --> {dimensions}\nwalk_length --> {walk_length}\nnum_walks --> {num_walks}')
-
-    model = node2vec.fit(window=10, min_count=1, batch_words=4)
-
-    if savename is not None:
-        model.wv.save_word2vec_format(f'{emb_dir}/{savename}')
-
-
-def embed_all_node2vec(emb_dir, datasets=None, dimensions=64, walk_length=30, num_walks=200):
+def graph2vec(graphs, emb_dir, savename=None):
     '''
-    Creates a node2vec embedding for all the datasets in datasets.
+    Creates a graph2vec embedding for the graphs in graphs.
+    :param graphs: list of graphs to embed.
+    :param emb_dir: name of the directory where the embedding will be stored.
+    '''
+    graph2vec = Graph2Vec()
+    graph2vec.fit(graphs)
+    embeddings = graph2vec.get_embedding()
+    with open(f'{emb_dir}/{savename}.pkl', 'wb') as f:
+        pickle.dump(embeddings, f)
+
+
+def embed_all_graph2vec(emb_dir, datasets=None):
+    '''
+    Creates a graph2vec embedding for all the datasets in datasets.
     :param emb_dir: name of the directory where all the embeddings will be stored
     :param datasets: list containing the datasets to embed (if None it does the default ones)
-    :param dimensions: dimensions for the node2vec embeddings
-    :params walk_length: number of nodes in each random walk
-    :param num_walks: number of walks per node
     '''
     if datasets is None:
-        datasets = ['deezer_ego_nets', 'facebook_ct1', 'github_stargazers', 'REDDIT-BINARY']
+        datasets = ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'REDDIT-BINARY']
     Path(emb_dir).mkdir(parents=True, exist_ok=True)
     for ds in datasets:
         graphs = load_graph(min_num_nodes=10, name=ds)
-        for idx, g in enumerate(graphs):
-            Path(f'{emb_dir}/{ds}').mkdir(parents=True, exist_ok=True)
-            savename = f'{ds}/{ds}_{idx}'
-            node2vec(graph=g, emb_dir=emb_dir, savename=savename, dimensions=dimensions, walk_length=walk_length, num_walks=num_walks)
+        for idx, graph in tqdm(enumerate(graphs)):
+            graphs[idx] = nx.from_numpy_array(graph.numpy())
+        savename = f'{ds}'
+        graph2vec(graphs=graphs, emb_dir=emb_dir, savename=savename)
 
+def load_embeddings(embedding_dir):
+    '''
+    Loads all the embeddings in the embedding_dir directory
+    :param embedding_dir: directory where the embeddings are stored
+    :return: a list containing all the embeddings
+    '''
+    embeddings = []
+    for file in os.listdir(embedding_dir):
+        if file.endswith('.pkl'):
+            with open(f'{embedding_dir}/{file}', 'rb') as f:
+                embeddings.append(pickle.load(f))
+    return embeddings
+
+# %%
 
 if __name__ == '__main__':
-    main()
-    # embed_all_node2vec(emb_dir='node2vec_embeddings_0')
+    # main()
+    embed_all_graph2vec(emb_dir='graph2vec_embeddings_0')
