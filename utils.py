@@ -17,9 +17,10 @@ from graphons import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def download_datasets():
-    dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip','https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
-                     'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip']
+def download_datasets(dataset_links = []):
+    if len(dataset_links) == 0:
+        dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip','https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
+                        'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip']                        
     for l in dataset_links:
         r = requests.get(l)
         z = zipfile.ZipFile(io.BytesIO(r.content))
@@ -31,7 +32,7 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     print('Loading graph dataset: ' + str(name))
     G = nx.Graph()
     # load data
-    path = name + '/'
+    path = 'datasets/'+name + '/'
     data_adj = np.loadtxt(path + name + '_A.txt', delimiter=',').astype(int)
     data_graph_indicator = np.loadtxt(path + name + '_graph_indicator.txt', delimiter=',').astype(int)
     data_tuple = list(map(tuple, data_adj))
