@@ -1,11 +1,11 @@
 import io
+import zipfile
+
 import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
 import requests
-import torch
-import zipfile
 from scipy import linalg
 from scipy import sparse
 from scipy.optimize import linear_sum_assignment as linear_assignment
@@ -18,16 +18,23 @@ from graphons import *
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def download_datasets(dataset_links=[]):
-    if len(dataset_links) == 0:
+def download_datasets(dataset_links=None):
+    """
+    Function to download dataset
+
+    :param dataset_links:
+    :type dataset_links: list
+
+    :return: Downloads and extracts graph dataset
+    :rtype: None
+    """
+    if dataset_links is None:
         dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip',
                          'https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
                          'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip',
                          'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip']
-    for l in dataset_links:
-        r = requests.get(l)
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        z.extractall()
+    for link in dataset_links:
+        zipfile.ZipFile(io.BytesIO(requests.get(link).content)).extractall()
 
 
 # taken from https://github.com/JiaxuanYou/graph-generation/blob/3444b8ad2fd7ecb6ade45086b4c75f8e2e9f29d1/data.py#L24
