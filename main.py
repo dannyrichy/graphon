@@ -1,17 +1,15 @@
+import os
+import pickle
 from functools import reduce
 from pathlib import Path
 
 import networkx as nx
 from karateclub import Graph2Vec
+from tqdm import tqdm
 
 from config import DOWNLOAD_DATA
 from utils import *
 
-from tqdm import tqdm
-import pickle
-import os
-
-# %%
 
 def combine_datasets(li_dataset):
     """
@@ -89,6 +87,7 @@ def embed_all_graph2vec(emb_dir, datasets=None):
         savename = f'{ds}'
         graph2vec(graphs=graphs, emb_dir=emb_dir, savename=savename)
 
+
 def load_embeddings(embedding_dir):
     '''
     Loads all the embeddings in the embedding_dir directory
@@ -101,6 +100,7 @@ def load_embeddings(embedding_dir):
             with open(f'{embedding_dir}/{file}', 'rb') as f:
                 embeddings.append(pickle.load(f))
     return embeddings
+
 
 # %%
 

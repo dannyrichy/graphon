@@ -1,26 +1,29 @@
-import requests, zipfile, io
-import numpy as np
-import torch
-import networkx as nx
-from sklearn.metrics import confusion_matrix
-from scipy.optimize import linear_sum_assignment as linear_assignment
+import io
 import matplotlib.pyplot as plt
-
+import networkx as nx
+import numpy as np
 import pandas as pd
-from sklearn.cluster import KMeans
-from sklearn.neighbors import kneighbors_graph
-from scipy import sparse
+import requests
+import torch
+import zipfile
 from scipy import linalg
+from scipy import sparse
+from scipy.optimize import linear_sum_assignment as linear_assignment
+from sklearn.cluster import KMeans
+from sklearn.metrics import confusion_matrix
+from sklearn.neighbors import kneighbors_graph
 
 from graphons import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
-def download_datasets(dataset_links = []):
+def download_datasets(dataset_links=[]):
     if len(dataset_links) == 0:
-        dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip','https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
-                        'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip', 'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip']                        
+        dataset_links = ['https://www.chrsmrrs.com/graphkerneldatasets/facebook_ct1.zip',
+                         'https://www.chrsmrrs.com/graphkerneldatasets/deezer_ego_nets.zip',
+                         'https://www.chrsmrrs.com/graphkerneldatasets/github_stargazers.zip',
+                         'https://www.chrsmrrs.com/graphkerneldatasets/REDDIT-BINARY.zip']
     for l in dataset_links:
         r = requests.get(l)
         z = zipfile.ZipFile(io.BytesIO(r.content))
@@ -32,7 +35,7 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     print('Loading graph dataset: ' + str(name))
     G = nx.Graph()
     # load data
-    path = 'datasets/'+name + '/'
+    path = 'datasets/' + name + '/'
     data_adj = np.loadtxt(path + name + '_A.txt', delimiter=',').astype(int)
     data_graph_indicator = np.loadtxt(path + name + '_graph_indicator.txt', delimiter=',').astype(int)
     data_tuple = list(map(tuple, data_adj))
@@ -207,7 +210,6 @@ def data_simulation(graphons, number_of_graphs=10, start=100, stop=1000):
     print('graphs generated', len(graphs))
     print('true labels ', labels)
     return graphs, labels
-
 
     # plot adjacency matrix
     # plt.imshow(graph[0], cmap='hot')
