@@ -1,14 +1,16 @@
+import logging
 import os
 import pickle
 from functools import reduce
 from pathlib import Path
 
-import networkx as nx
 from karateclub import Graph2Vec
 from tqdm import tqdm
 
 from config import DOWNLOAD_DATA
 from utils import *
+
+logging.basicConfig(level=logging.INFO)
 
 
 def combine_datasets(li_dataset):
@@ -106,4 +108,5 @@ def load_embeddings(embedding_dir):
 
 if __name__ == '__main__':
     # main()
+    logging.info("Embedding all graph using graph2vec")
     embed_all_graph2vec(emb_dir='graph2vec_embeddings_0')
