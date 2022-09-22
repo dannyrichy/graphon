@@ -10,6 +10,8 @@ from tqdm import tqdm
 from config import DOWNLOAD_DATA
 from utils import *
 
+from graphon.hist_estimator import *
+
 logging.basicConfig(level=logging.INFO)
 
 
@@ -40,24 +42,27 @@ def main():
 
     # loading graphs
     fb = load_graph(min_num_nodes=100, name='facebook_ct1')
-    github = load_graph(min_num_nodes=950, name='github_stargazers')
-    reddit = load_graph(min_num_nodes=3200, name='REDDIT-BINARY')
-    deezer = load_graph(min_num_nodes=200, name='deezer_ego_nets')
+    # github = load_graph(min_num_nodes=950, name='github_stargazers')
+    # reddit = load_graph(min_num_nodes=3200, name='REDDIT-BINARY')
+    # deezer = load_graph(min_num_nodes=200, name='deezer_ego_nets')
 
-    fb_github_reddit, gt_fb_github_reddit = combine_datasets([fb, github, reddit])
-    # gt_fb_github_reddit
+    # fb_github_reddit, gt_fb_github_reddit = combine_datasets([fb, github, reddit])
+    # # gt_fb_github_reddit
 
-    fb_github_deezer, gt_fb_github_deezer = combine_datasets([fb, github, deezer])
-    # gt_fb_github_deezer
+    # fb_github_deezer, gt_fb_github_deezer = combine_datasets([fb, github, deezer])
+    # # gt_fb_github_deezer
 
-    fb_reddit_deezer, gt_fb_reddit_deezer = combine_datasets([fb, reddit, deezer])
-    # gt_fb_reddit_deezer
+    # fb_reddit_deezer, gt_fb_reddit_deezer = combine_datasets([fb, reddit, deezer])
+    # # gt_fb_reddit_deezer
 
-    github_reddit_deezer, gt_github_reddit_deezer = combine_datasets([github, reddit, deezer])
+    # github_reddit_deezer, gt_github_reddit_deezer = combine_datasets([github, reddit, deezer])
     # gt_github_reddit_deezer
 
-    fb_github_reddit_deezer, gt_fb_github_reddit_deezer = combine_datasets([fb, github, reddit, deezer])
+    # fb_github_reddit_deezer, gt_fb_github_reddit_deezer = combine_datasets([fb, github, reddit, deezer])
     # gt_fb_github_reddit_deezer
+    approxs = hist_approximate(fb, n0=10)
+    plt.imshow(approxs[0], cmap='hot')
+    plt.show()
 
 
 def graph2vec(graphs, emb_dir, savename=None):
@@ -107,6 +112,6 @@ def load_embeddings(embedding_dir):
 # %%
 
 if __name__ == '__main__':
-    # main()
-    logging.info("Embedding all graph using graph2vec")
-    embed_all_graph2vec(emb_dir='graph2vec_embeddings_0')
+    main()
+    # logging.info("Embedding all graph using graph2vec")
+    # embed_all_graph2vec(emb_dir='graph2vec_embeddings_0')

@@ -2,7 +2,11 @@ import logging
 
 import torch
 
-from graphon.config import DEVICE
+import graphon
+import sys
+import os
+sys.path.append(os.path.abspath('../'))
+from config import DEVICE
 
 logger = logging.getLogger(__name__)
 
