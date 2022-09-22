@@ -12,10 +12,24 @@ from scipy.optimize import linear_sum_assignment as linear_assignment
 from sklearn.cluster import KMeans
 from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import kneighbors_graph
-
-from graphons import *
+from functools import reduce
+from graphon.graphons import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+def combine_datasets(li_dataset):
+    """
+    Combining datasets
+
+    :param li_dataset: list of datasets
+    :type li_dataset: list
+
+    :return: Reduced datasets with labels
+    :rtype: tuple
+    """
+    result = reduce(lambda x, y: x + y, li_dataset)
+    labels = np.array([i for i, dataset in enumerate(li_dataset) for _ in range(len(dataset))])
+    return result, labels
 
 
 def download_datasets(dataset_links=None):
@@ -124,9 +138,9 @@ def compute_spectrum_graph_laplacian(graph_laplacian):
     """Compute eigenvalues and eigenvectors and project
     them onto the real numbers.
     """
-    eigenvals, eigenvcts = linalg.eig(graph_laplacian)
-    eigenvals = np.real(eigenvals)
-    eigenvcts = np.real(eigenvcts)
+    eigenvals, eigenvcts = linalg.eigh(graph_laplacian)
+    # eigenvals = np.real(eigenvals)
+    # eigenvcts = np.real(eigenvcts)
     return eigenvals, eigenvcts
 
 
