@@ -19,7 +19,7 @@ def graph2vec(graphs, emb_dir, savename=None):
         pickle.dump(embeddings, f)
 
 
-def embed_all_graph2vec(emb_dir = EMBEDDING_DIR, graph_list = []):
+def embed_all_graph2vec(emb_dir = EMBEDDING_DIR, graph_list = [], data = []):
     '''
     Creates a graph2vec embedding for the graphs in the graphlist.
     :param emb_dir: name of the directory where all the embeddings will be stored
@@ -32,7 +32,7 @@ def embed_all_graph2vec(emb_dir = EMBEDDING_DIR, graph_list = []):
     for name_id, graphs in enumerate(graph_list):
         for idx, graph in tqdm(enumerate(graphs)):
             graphs[idx] = nx.from_numpy_array(graph.numpy())
-        savename = f'{DATASETS[name_id]}'
+        savename = f'{data[name_id]}'
         graph2vec(graphs=graphs, emb_dir=emb_dir, savename=savename)
 
 
