@@ -1,9 +1,9 @@
 import io
 import zipfile
+from functools import reduce
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import numpy as np
 import pandas as pd
 import requests
 from scipy import linalg
@@ -12,10 +12,11 @@ from scipy.optimize import linear_sum_assignment as linear_assignment
 from sklearn.cluster import KMeans
 from sklearn.metrics import confusion_matrix
 from sklearn.neighbors import kneighbors_graph
-from functools import reduce
+
 from graphon.graphons import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 
 def combine_datasets(li_dataset):
     """
@@ -160,6 +161,33 @@ def spectral_clustering(affinity_mat, num_clusters=3):
     labels = k_means.predict(proj_df)
 
     return labels
+
+
+def graphon_8(x):
+    'w(u,v) = exp(-max(u, v)^(3/4))'
+    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+    u = p + x.reshape(1, -1)
+    v = p + x.reshape(-1, 1)
+    graphon = torch.exp(-torch.pow(torch.max(u, v), 0.75))
+    return graphon
+
+
+def graphon_9(x):
+    'w(u,v) = exp(-0.5 * (min(u, v) + u^0.5 + v^0.5))'
+    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+    u = p + x.reshape(1, -1)
+    v = p + x.reshape(-1, 1)
+    graphon = torch.exp(-0.5 * (torch.min(u, v) + torch.pow(u, 0.5) + torch.pow(v, 0.5)))
+    return graphon
+
+
+def graphon_10(x):
+    'w(u,v) = log(1 + 0.5 * max(u, v))'
+    p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+    u = p + x.reshape(1, -1)
+    v = p + x.reshape(-1, 1)
+    graphon = torch.log(1 + 0.5 * torch.max(u, v))
+    return graphon
 
 
 def generate_graphs(graphon_key, n):
