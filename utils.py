@@ -116,9 +116,10 @@ def _make_cost_m(cm):
 def error(gt_real, labels):
     cm = confusion_matrix(gt_real, labels)
     indexes = linear_assignment(_make_cost_m(cm))  # Hungarian algorithm
-    js = [e[1] for e in sorted(indexes, key=lambda x: x[0])]
-    cm2 = cm[:, js]
-    err = 1 - np.trace(cm2) / np.sum(cm2)
+    idxs_mapping = {i[1]:i[0] for i in zip(indexes[0], indexes[1])}
+    mapped_labels = np.array([idxs_mapping[i] for i in labels])
+    new_cm = confusion_matrix(gt_real, mapped_labels)
+    err = 1 - np.trace(new_cm) / np.sum(new_cm)
     return err
 
 
