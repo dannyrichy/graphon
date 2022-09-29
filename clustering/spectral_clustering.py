@@ -15,9 +15,10 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-def kmeans_dist(dist, no_clusters=2, no_eig_vecs=2):
+def DSC(dist, no_clusters=2, no_eig_vecs=2):
     """
-    Performs kmeans clustering on the distance matrix
+    Performs the Distance Based Spectral Clustering 
+    on the distance matrix as defined in the paper 
 
     :param dist: Distance matrix
     :type dist: torch.Tensor
@@ -31,9 +32,11 @@ def kmeans_dist(dist, no_clusters=2, no_eig_vecs=2):
     :return: Labels
     :rtype: torch.Tensor
     """
-    eig_vals, eig_vecs = torch.symeig(dist, eigenvectors=True)
+    # eigenvalues and eigenvectors decomposition of symmetric matrix
+    eig_vals, eig_vecs = torch.linalg.eigh(dist)
+
     # Sorting eigvalues in ascending order
-    eig_vals = torch.argsort(-torch.abs(eig_vals))
+    eig_vals = torch.argsort(torch.abs(eig_vals))
     
     # Selecting the first no_eig_vecs eigenvectors
     idxs = eig_vals[:no_eig_vecs]
@@ -57,7 +60,7 @@ def frobenius_norm(li_graph):
     dist = torch.zeros((no_graphs, no_graphs), dtype=torch.float64).to(device=DEVICE)
     for i in range(no_graphs):
         for j in range(i + 1):
-            dist[i][j] = torch.norm(li_graph[i] - li_graph[j])
+            dist[i][j] = torch.norm(li_graph[i].float() - li_graph[j].float())
             dist[j][i] = dist[i][j]
     return dist
 
@@ -65,9 +68,9 @@ def frobenius_norm(li_graph):
 
 def spectral_clustering(affinity_mat, num_clusters=3):
     """
-    Spectral clustering algorithm.
+    Vanilla spectral clustering algorithm.
 
-    :param affinity_mat: Affinity matrix
+    :param affinity_mat: Affinity matrix (adjacency matrix)
     :type affinity_mat: np.array
 
     :param num_clusters: Number of clusters
@@ -78,11 +81,11 @@ def spectral_clustering(affinity_mat, num_clusters=3):
     """
     # Generates graph Laplacian from affinity matrix
     graph_laplacian = generate_graph_laplacian(df=affinity_mat, nn=8)
-    eigenvals, eigenvcts = compute_spectrum_graph_laplacian(graph_laplacian)
+    eigen_vals, eigen_vecs = compute_spectrum_graph_laplacian(graph_laplacian)
 
-    eigenvals_sorted_indices = np.argsort(eigenvals)
+    eigenvals_sorted_indices = np.argsort(eigen_vals)
 
-    proj_df = pd.DataFrame(eigenvcts[:, eigenvals_sorted_indices[:num_clusters]])  # zero_eigenvals_index.squeeze()])
+    proj_df = pd.DataFrame(eigen_vecs[:, eigenvals_sorted_indices[:num_clusters]])  
     k_means = KMeans(random_state=25, n_clusters=num_clusters)
     k_means.fit(proj_df)
     labels = k_means.predict(proj_df)
@@ -90,7 +93,7 @@ def spectral_clustering(affinity_mat, num_clusters=3):
     return labels
 
 
-def graphon_clustering(graphs, true_labels, n0, num_clusters=3):
+def graphon_clustering(graphs, true_labels, num_clusters=3):
     """
     Perform graphon clustering and returns the error scores.
 
@@ -109,12 +112,11 @@ def graphon_clustering(graphs, true_labels, n0, num_clusters=3):
     :return: Error scores for clustering
     :rtype: tuple[float, float]
     """
-    # Gets the histogram approximation of every graph
-    graphs_apprx = hist_approximate(graphs, n0)
 
     # Matrix of pairwise distances between graphons
-    dist = frobenius_norm(graphs_apprx)
+    dist = frobenius_norm(graphs)
+
     # Get label name for each graph
-    labels = kmeans_dist(dist, no_clusters=num_clusters)
+    labels = DSC(dist, no_clusters=num_clusters)
 
     return adjusted_rand_score(true_labels, labels), error(true_labels, labels)

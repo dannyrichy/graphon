@@ -27,7 +27,7 @@ def error(gt_real, labels):
     :param gt_real: Ground truth
     :type gt_real: list
 
-    :return: Error
+    :return: Error measure computed using the Hungarian algorithm
     :rtype: float
     """
     cm = confusion_matrix(gt_real, labels)
@@ -41,7 +41,7 @@ def error(gt_real, labels):
 
 def generate_graph_laplacian(df, nn):
     """
-    Generate graph Laplacian from data.
+    Compute the (weighted) graph of k-Neighbors for points in X.
     
     :param df: Dataframe
     :type df: pd.DataFrame
