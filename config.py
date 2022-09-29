@@ -11,4 +11,5 @@ DATA = {'DATASETS' : ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'R
 CREATE_EMBEDDINGS = False
 NUM_GRAPHONS = 10
 NUM_GRAPHS_PER_GRAPHONS = 4
+NUM_NODES = 300
 

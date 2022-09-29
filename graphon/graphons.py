@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-
+from config import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class graphons_graphs():
@@ -122,7 +122,10 @@ class graphons_graphs():
         labels = []
         for graphon in self.graphons_keys:
             p = torch.randperm(stop)
-            n = p[p > start][:self.num_graphs]
+            if NUM_NODES == None:
+                n = p[p > start][:self.num_graphs]
+            else:
+                n = [NUM_NODES] * self.num_graphs
             #print('nodes ', n)
             g = self.generate_graphs(graphon, n)
             graphs = graphs + g

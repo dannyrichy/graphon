@@ -45,9 +45,10 @@ def load_embeddings(embedding_dir = EMBEDDING_DIR, names = []):
     '''
     embeddings = []
     labels = []
+    gt = []
     for id, name in enumerate(names):
-        with open(f'{embedding_dir}{name}', 'rb') as f:
+        with open(f'{embedding_dir}{name}.pkl', 'rb') as f:
             tmp = pickle.load(f)
-            gt += [id]*len(embeddings)
+            gt += [id]*len(tmp)
             embeddings.append(tmp)
-    return embeddings, gt
+    return np.reshape( embeddings, (len(embeddings)*tmp.shape[0], -1) ), gt
