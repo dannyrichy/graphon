@@ -1,9 +1,8 @@
 import torch
 import numpy as np
-from config import *
+from config import DEVICE, NUM_NODES
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-class graphons_graphs():
+class SynthGraphons():
     
     def __init__(self, num_graphs, graphons_keys):#both graphons_keys and num_nodes 
                                                              #are lists
@@ -14,7 +13,7 @@ class graphons_graphs():
         # graphons for simulated data
     def graphon_1(self, x):
         'w(u,v) = u * v'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = u * v
@@ -23,7 +22,7 @@ class graphons_graphs():
 
     def graphon_2(self, x):
         'w(u,v) = exp{-(u^0.7 + v^0.7))}'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = torch.exp(-(torch.pow(u, 0.7) + torch.pow(v, 0.7)))
@@ -32,7 +31,7 @@ class graphons_graphs():
 
     def graphon_3(self, x):
         'w(u,v) = (1/4) * [u^2 + v^2 + u^(1/2) + v^(1/2)]'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = 0.25 * (torch.pow(u, 2) + torch.pow(v, 2) + torch.pow(u, 0.5) + torch.pow(u, 0.5))
@@ -41,7 +40,7 @@ class graphons_graphs():
 
     def graphon_4(self, x):
         'w(u,v) = 0.5 * (u + v)'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = 0.5 * (u + v)
@@ -50,7 +49,7 @@ class graphons_graphs():
 
     def graphon_5(self, x):
         'w(u,v) = 1 / (1 + exp(-10 * (u^2 + v^2)))'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = 1 / (1 + torch.exp(-10 * (torch.pow(u, 2) + torch.pow(v, 2))))
@@ -59,7 +58,7 @@ class graphons_graphs():
 
     def graphon_6(self, x):
         'w(u,v) = |u - v|'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = torch.abs(u - v)
@@ -68,7 +67,7 @@ class graphons_graphs():
 
     def graphon_7(self, x):
         'w(u,v) = 1 / (1 + exp(-(max(u,v)^2 + min(u,v)^4)))'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = 1 / (1 + torch.exp(-(torch.pow(torch.max(u, v), 2) + torch.pow(torch.min(u, v), 4))))
@@ -77,7 +76,7 @@ class graphons_graphs():
 
     def graphon_8(self, x):
         'w(u,v) = exp(-max(u, v)^(3/4))'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = torch.exp(-torch.pow(torch.max(u, v), 0.75))
@@ -86,7 +85,7 @@ class graphons_graphs():
 
     def graphon_9(self, x):
         'w(u,v) = exp(-0.5 * (min(u, v) + u^0.5 + v^0.5))'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = torch.exp(-0.5 * (torch.min(u, v) + torch.pow(u, 0.5) + torch.pow(v, 0.5)))
@@ -95,18 +94,18 @@ class graphons_graphs():
 
     def graphon_10(self, x):
         'w(u,v) = log(1 + 0.5 * max(u, v))'
-        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=device)
+        p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
         graphon = torch.log(1 + 0.5 * torch.max(u, v))
         return graphon
      
 
-    def generate_graphs(self, graphon_key, n):
+    def _generate_graphs(self, graphon_key, n):
         graph_gen = []
 
         for nn in n:
-            x = torch.distributions.uniform.Uniform(0, 1).sample([nn]).to(device=device)
+            x = torch.distributions.uniform.Uniform(0, 1).sample([nn]).to(device=DEVICE)
             graph_prob = eval('self.graphon_' + str(graphon_key+1) + '(x)')
 
             graph = torch.distributions.binomial.Binomial(1, graph_prob).sample()
@@ -118,6 +117,18 @@ class graphons_graphs():
 
 
     def data_simulation(self, start=100, stop=1000):
+        """
+        Simulate data for the graphon model
+
+        :param start: start of the range of the number of nodes
+        :type start: int
+
+        :param stop: end of the range of the number of nodes
+        :type stop: int
+
+        :return: list of graphs and list of labels
+        :rtype: list, list
+        """
         graphs = []
         labels = []
         for graphon in self.graphons_keys:
@@ -127,7 +138,7 @@ class graphons_graphs():
             else:
                 n = [NUM_NODES] * self.num_graphs
             #print('nodes ', n)
-            g = self.generate_graphs(graphon, n)
+            g = self._generate_graphs(graphon, n)
             graphs = graphs + g
 
         for i in range(len(self.graphons_keys)):
