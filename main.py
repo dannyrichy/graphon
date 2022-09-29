@@ -1,3 +1,4 @@
+from cProfile import label
 from errno import EMEDIUMTYPE
 import logging
 import os
@@ -12,48 +13,23 @@ from graph2vec_utils import *
 from graphon.graphons import graphons_graphs
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def classification(embeddings = [], gt = []):
+    permutation = np.random.permutation(len(embeddings)) # random shuffling
+    X = np.take(embeddings, permutation, axis = 0)
+    y = np.take(gt, permutation, axis=0)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    clf=RandomForestClassifier(n_estimators=100)
+    clf.fit(X_train,y_train)
+    y_pred=clf.predict(X_test)
+    accuracy_classification = metrics.accuracy_score(y_test, y_pred)
+    print("Accuracy for classification on embeddings: ",accuracy_classification)
 
 
-class classifier_clustering():
-    def __init__(self, classification, graphs, approx_nodes):
-        self.classification = classification
-        self.graphs = graphs
-        self.approx_nodes
-
-    def classify(self, gt = None, graph2vec_embeddings = True):
-
-        if graph2vec_embeddings:
-            ##### classification using the embeddings from graph2vec
-            embeddings, gt = load_embeddings(names=DATA['SYNTHETIC_DATA'])
-            embeddings = np.squeeze(embeddings)
-            print('number of datasamples (embeddings): ',len(embeddings))
-            print('number of labels: ',len(gt))
-
-        else:
-            if gt is None:
-                print('You need to pass the ground truth labels')
-            approxs = hist_approximate(self.graphs, self.approx_nodes) #these are the graphon embeddings
-            ##### classification using the embeddings from the graphon - since the graphon approximation is a matrix, we compute the 
-            ##### eigen vector corresponding to the largest eigen value, and use this vector as a further embedding of a graphon
-            embeddings = []
-            for i in range(len(approxs)):
-                eigen_val, eigen_vec = compute_spectrum_graph_laplacian(approxs[i])
-                embeddings.append(eigen_vec[0]) #using only the eigen vector corresponding to the largest eigen value
-        
-        permutation = np.random.permutation(len(embeddings)) # random shuffling
-        X = np.take(embeddings, permutation, axis = 0)
-        y = np.take(gt, permutation, axis=0)
-
-        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
-        clf=RandomForestClassifier(n_estimators=100)
-        clf.fit(X_train,y_train)
-        y_pred=clf.predict(X_test)
-        accuracy_classification = metrics.accuracy_score(y_test, y_pred)
-        print("Accuracy for classification on embeddings: ",accuracy_classification)
-
-
-    def clustering(self):
-        return None
+def clustering(self):
+    return None
 
 
 
@@ -79,13 +55,33 @@ if __name__ == '__main__':
     '''
 
     syn_graphons = graphons_graphs(NUM_GRAPHS_PER_GRAPHONS, DATA['SYNTHETIC_DATA'])
-    graphs, lables = syn_graphons.data_simulation(start=100, stop=1000)
+    graphs, labels = syn_graphons.data_simulation(start=100, stop=1000)
     graphs = np.split(np.array(graphs), NUM_GRAPHONS)
     if CREATE_EMBEDDINGS:
         embed_all_graph2vec(emb_dir=EMBEDDING_DIR, graph_list=[list(graphs[i]) for i in range(NUM_GRAPHONS)], 
                                                                 data = DATA['SYNTHETIC_DATA'])
 
-    a = 1
+
+
+
+    ##### classification using the embeddings from graph2vec
+    embeddings, gt = load_embeddings(names=DATA['SYNTHETIC_DATA'])
+    embeddings = np.squeeze(embeddings)
+    logger.info('number of datasamples (embeddings): ',len(embeddings))
+    print('number of labels: ',len(gt))
+    classification(embeddings, gt)
+
+
+    approxs = hist_approximate(graphs, n0 = 30) #these are the graphon embeddings
+    ##### classification using the embeddings from the graphon - since the graphon approximation is a matrix, we compute the 
+    ##### eigen vector corresponding to the largest eigen value, and use this vector as a further embedding of a graphon
+    embeddings = []
+    for i in range(len(approxs)):
+        eigen_val, eigen_vec = compute_spectrum_graph_laplacian(approxs[i])
+        embeddings.append(eigen_vec[0]) #using only the eigen vector corresponding to the largest eigen value
+    classification(embeddings, labels)
+
+    
 
 
 
