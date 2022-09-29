@@ -10,8 +10,8 @@ from sklearn import metrics
 from graph2vec_utils import *
 from graphon.graphons import graphons_graphs
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+#logging.basicConfig(level=logging.INFO)
+#logger = logging.getLogger(__name__)
 
 def classification(embeddings = [], gt = []):
     permutation = np.random.permutation(len(embeddings)) # random shuffling
@@ -23,7 +23,7 @@ def classification(embeddings = [], gt = []):
     clf.fit(X_train,y_train)
     y_pred=clf.predict(X_test)
     accuracy_classification = metrics.accuracy_score(y_test, y_pred)
-    logger.info("Accuracy for classification on embeddings: ",accuracy_classification)
+    print("Accuracy for classification on embeddings: ",accuracy_classification)
 
 
 def clustering(self):
@@ -60,6 +60,8 @@ if __name__ == '__main__':
         flattened_emb = approxs[i].numpy().flatten()
         embeddings.append(flattened_emb) #using only the eigen vector corresponding to the largest eigen value
     classification(embeddings, labels)
+
+    
 
     
 
