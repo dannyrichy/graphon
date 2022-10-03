@@ -1,16 +1,18 @@
 import torch
 import numpy as np
-from config import DEVICE, NUM_NODES, SAVE_GRAPHONS_LOC
+from config import DEVICE
 import matplotlib.pyplot as plt
 import pickle
 from tqdm import tqdm
 class SynthGraphons():
     
-    def __init__(self, num_graphs, graphons_keys):#both graphons_keys and num_nodes 
+    def __init__(self, num_graphs, graphons_keys, num_nodes, save_graphons_loc):#both graphons_keys and num_nodes 
                                                              #are lists
         self.num_graphs = num_graphs
         self.graphons_keys = [int(item) for item in graphons_keys] #0 to 9
         self.name = ''
+        self.num_nodes = num_nodes
+        self.save_graphons_loc = save_graphons_loc
         
         # graphons for simulated data
     def graphon_1(self, x):
@@ -118,7 +120,7 @@ class SynthGraphons():
         return graph_gen
 
 
-    def data_simulation(self, start=100, stop=1000, save=False, save_dir=SAVE_GRAPHONS_LOC):
+    def data_simulation(self, start=100, stop=1000, save=False, save_dir=self.save_graphons_loc):
         """
         Simulate data for the graphon model
 
@@ -135,10 +137,10 @@ class SynthGraphons():
         labels = []
         for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
-            if NUM_NODES == None:
+            if self.num_nodes == None:
                 n = p[p > start][:self.num_graphs]
             else:
-                n = [NUM_NODES] * self.num_graphs
+                n = [self.num_nodes] * self.num_graphs
             #print('nodes ', n)
             g = self._generate_graphs(graphon, n)
             graphs = graphs + g
@@ -163,7 +165,7 @@ class SynthGraphons():
         :param labels: list of labels
         :type labels: list
         """
-        with open(SAVE_GRAPHONS_LOC, 'wb') as f:
+        with open(self.save_graphons_loc, 'wb') as f:
             pickle.dump((graphs, labels), f)
     
     def load_graphs(self):
@@ -173,7 +175,7 @@ class SynthGraphons():
         :return: list of graphs and list of labels
         :rtype: list, list
         """
-        with open(SAVE_GRAPHONS_LOC, 'rb') as f:
+        with open(self.save_graphons_loc, 'rb') as f:
             graphs, labels = pickle.load(f)
         return graphs, labels
 

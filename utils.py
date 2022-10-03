@@ -139,6 +139,7 @@ def classification(embeddings, true_labels):
     # print("Accuracy:", accuracy_classification)
     
 
+
 def clustering(graphs, true_labels, k=2, GRAPH2VEC=False):
     if GRAPH2VEC:
         adjusted_rand_score, error = graph2vec_clustering(li_emb = graphs, true_labels=true_labels, k=2)  
