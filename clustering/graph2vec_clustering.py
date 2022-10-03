@@ -4,7 +4,7 @@ Contains functions related to graph2vec clustering
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 
-from utils import error
+from clustering.utils import error
 
 
 def graph2vec_clustering(li_emb, true_labels, k):

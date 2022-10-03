@@ -1,0 +1,31 @@
+
+loading graphs from  ./graphons_dir/4_graphons_500_graphs.pkl
+creating histogram estimate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 2000/2000 [00:49<00:00, 40.32it/s]
+Performing classification
+Training accuracy for classification on embeddings:  1.0
+Test accuracy for classification on embeddings:  0.9855

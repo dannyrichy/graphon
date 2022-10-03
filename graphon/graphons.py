@@ -1,18 +1,20 @@
 import torch
 import numpy as np
-from config import DEVICE, NUM_NODES
-
+from config import DEVICE, NUM_NODES, SAVE_GRAPHONS_LOC
+import matplotlib.pyplot as plt
+import pickle
+from tqdm import tqdm
 class SynthGraphons():
     
     def __init__(self, num_graphs, graphons_keys):#both graphons_keys and num_nodes 
                                                              #are lists
         self.num_graphs = num_graphs
         self.graphons_keys = [int(item) for item in graphons_keys] #0 to 9
-
+        self.name = ''
         
         # graphons for simulated data
     def graphon_1(self, x):
-        'w(u,v) = u * v'
+        self.name = 'w(u,v) = u * v'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -21,7 +23,7 @@ class SynthGraphons():
 
 
     def graphon_2(self, x):
-        'w(u,v) = exp{-(u^0.7 + v^0.7))}'
+        self.name = 'w(u,v) = exp{-(u^0.7 + v^0.7))}'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -30,7 +32,7 @@ class SynthGraphons():
 
 
     def graphon_3(self, x):
-        'w(u,v) = (1/4) * [u^2 + v^2 + u^(1/2) + v^(1/2)]'
+        self.name = 'w(u,v) = (1/4) * [u^2 + v^2 + u^(1/2) + v^(1/2)]'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -39,7 +41,7 @@ class SynthGraphons():
 
 
     def graphon_4(self, x):
-        'w(u,v) = 0.5 * (u + v)'
+        self.name = 'w(u,v) = 0.5 * (u + v)'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -48,7 +50,7 @@ class SynthGraphons():
 
 
     def graphon_5(self, x):
-        'w(u,v) = 1 / (1 + exp(-10 * (u^2 + v^2)))'
+        self.name = 'w(u,v) = 1 / (1 + exp(-10 * (u^2 + v^2)))'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -57,7 +59,7 @@ class SynthGraphons():
 
 
     def graphon_6(self, x):
-        'w(u,v) = |u - v|'
+        self.name = 'w(u,v) = |u - v|'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -66,7 +68,7 @@ class SynthGraphons():
 
 
     def graphon_7(self, x):
-        'w(u,v) = 1 / (1 + exp(-(max(u,v)^2 + min(u,v)^4)))'
+        self.name =  'w(u,v) = 1 / (1 + exp(-(max(u,v)^2 + min(u,v)^4)))'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -75,7 +77,7 @@ class SynthGraphons():
 
 
     def graphon_8(self, x):
-        'w(u,v) = exp(-max(u, v)^(3/4))'
+        self.name = 'w(u,v) = exp(-max(u, v)^(3/4))'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -84,7 +86,7 @@ class SynthGraphons():
 
 
     def graphon_9(self, x):
-        'w(u,v) = exp(-0.5 * (min(u, v) + u^0.5 + v^0.5))'
+        self.name = 'w(u,v) = exp(-0.5 * (min(u, v) + u^0.5 + v^0.5))'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -93,7 +95,7 @@ class SynthGraphons():
 
 
     def graphon_10(self, x):
-        'w(u,v) = log(1 + 0.5 * max(u, v))'
+        self.name = 'w(u,v) = log(1 + 0.5 * max(u, v))'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
         u = p + x.reshape(1, -1)
         v = p + x.reshape(-1, 1)
@@ -116,7 +118,7 @@ class SynthGraphons():
         return graph_gen
 
 
-    def data_simulation(self, start=100, stop=1000):
+    def data_simulation(self, start=100, stop=1000, save=False, save_dir=SAVE_GRAPHONS_LOC):
         """
         Simulate data for the graphon model
 
@@ -131,7 +133,7 @@ class SynthGraphons():
         """
         graphs = []
         labels = []
-        for graphon in self.graphons_keys:
+        for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
             if NUM_NODES == None:
                 n = p[p > start][:self.num_graphs]
@@ -146,4 +148,45 @@ class SynthGraphons():
             labels = labels + l.tolist()
         #print('graphs generated', len(graphs))
         #print('true labels ', labels)
+        if save:
+            self.save_graphs(graphs, labels)
+        
         return graphs, labels
+
+    def save_graphs(self, graphs, labels):
+        """
+        Save graphs and labels to a file
+
+        :param graphs: list of graphs
+        :type graphs: list
+
+        :param labels: list of labels
+        :type labels: list
+        """
+        with open(SAVE_GRAPHONS_LOC, 'wb') as f:
+            pickle.dump((graphs, labels), f)
+    
+    def load_graphs(self):
+        """
+        Load graphs and labels from a file
+
+        :return: list of graphs and list of labels
+        :rtype: list, list
+        """
+        with open(SAVE_GRAPHONS_LOC, 'rb') as f:
+            graphs, labels = pickle.load(f)
+        return graphs, labels
+
+    def plot_graphons(self, key):
+        """
+        Plot the graphon functions
+
+        :param key: the key of the graphon function
+        :type key: int
+        """
+        x = torch.linspace(0, 1, 1000)
+        y = eval('self.graphon_' + str(key) + '(x)')
+        plt.title('Graphon ' + str(key) + f' --> ({self.name})')
+        plt.imshow(y, cmap='hot', interpolation='nearest')
+        plt.colorbar()
+        plt.show()

@@ -3,6 +3,7 @@ import logging
 import torch
 
 import graphon
+from tqdm import tqdm
 import sys
 import os
 sys.path.append(os.path.abspath('../'))
@@ -25,8 +26,9 @@ def hist_approximate(graphs, n0=30):
     :return: Approximate list of graphs
     :rtype: list
     """
+    print('creating histogram estimate')
     graphs_approx = []
-    for graph in graphs:
+    for graph in tqdm(graphs):
         nn = graph.shape[0]
         h = int(nn / n0)
         logger.info(f"Shape of graph: {nn}")

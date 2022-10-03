@@ -6,8 +6,14 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import requests
 import numpy as np
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_validate
 import torch
 import logging
+
+import wandb
+from clustering.graph2vec_clustering import graph2vec_clustering
+from clustering.spectral_clustering import graphon_clustering
 from graphon.graphons import SynthGraphons
 from config import DEVICE
 
@@ -102,3 +108,40 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     plt.show()
     return graphs
 
+def classification(embeddings, true_labels):
+    """
+    Classification of graph embeddings using Random Forests
+    
+    :param embeddings: List of embeddings
+    :type embeddings: list
+
+    :param gt: Ground truth labels
+    :type gt: list
+    """
+    print('Performing classification')
+    permutation = np.random.permutation(len(embeddings)) # random shuffling
+    X = np.take(embeddings, permutation, axis=0)
+    y = np.take(true_labels, permutation, axis=0)
+
+    # cross validation
+    scores = cross_validate(RandomForestClassifier(n_estimators=100), X, y, cv=5, scoring='accuracy', return_train_score=True)
+    print("Training accuracy for classification on embeddings: ", scores['train_score'].mean())
+    print("Test accuracy for classification on embeddings: ", scores['test_score'].mean())
+
+    wandb.log({"train_acc": scores['train_score'].mean(), "test_acc": scores['test_score'].mean()})
+
+    # no cross validation
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
+    # clf=RandomForestClassifier(n_estimators=10)
+    # clf.fit(X_train,y_train)
+    # y_pred=clf.predict(X_test)
+    # accuracy_classification = metrics.accuracy_score(y_test, y_pred)
+    # print("Accuracy:", accuracy_classification)
+    
+
+def clustering(graphs, true_labels, k=2, GRAPH2VEC=False):
+    if GRAPH2VEC:
+        adjusted_rand_score, error = graph2vec_clustering(li_emb = graphs, true_labels=true_labels, k=2)  
+    else: 
+        graphon_clustering(graphs, true_labels, num_clusters=k)
+    print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.') 
