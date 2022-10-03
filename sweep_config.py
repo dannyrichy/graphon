@@ -5,7 +5,8 @@ sweep_configuration = {
     'metric': {'goal': 'maximize', 'name': 'test_accuracy'},
     'parameters': 
     {
-        'NUM_GRAPHS_PER_GRAPHON': {'values': [50, 100, 500]},
-        'NUM_NODES': {'values': [None, 100, 300, 500]}
+        'NUM_GRAPHONS': {'values': [4]},
+        'NUM_GRAPHS_PER_GRAPHON': {'values': [50, 100]},
+        'NUM_NODES': {'values': [None, 100, 300]}
      }
 }

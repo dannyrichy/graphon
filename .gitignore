@@ -1,6 +1,7 @@
 # custom git ignores
 graphons_dir/
 graph2vec_embeddings/
+wandb/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -21,9 +21,9 @@ def main(config=None):
     with wandb.init(config=config):
         config = wandb.config   
 
-        SAVE_GRAPHONS_LOC = f'./graphons_dir/{config.NUM_GRAPHONS}_graphons_{config.NUM_GRAPHS_PER_GRAPHONS}_graphs.pkl'
+        SAVE_GRAPHONS_LOC = f'./graphons_dir/{config.NUM_GRAPHONS}_graphons_{config.NUM_GRAPHS_PER_GRAPHON}_graphs.pkl'
         # synthetic data
-        syn_graphons = SynthGraphons(NUM_GRAPHS_PER_GRAPHONS, DATA['SYNTHETIC_DATA'], num_nodes=config.NUM_NODES, save_graphons_loc = SAVE_GRAPHONS_LOC)
+        syn_graphons = SynthGraphons(config.NUM_GRAPHS_PER_GRAPHON, DATA['SYNTHETIC_DATA'], num_nodes=config.NUM_NODES, save_graphons_loc = SAVE_GRAPHONS_LOC)
         if SAVE_GRAPHONS:
             print('storing graphs at ', SAVE_GRAPHONS_LOC)
             graphs, labels = syn_graphons.data_simulation(start=100, stop=1000, save=SAVE_GRAPHONS)
@@ -52,7 +52,9 @@ def main(config=None):
         for i in range(len(approxs)):
             flattened_emb = approxs[i].numpy().flatten()
             embeddings.append(flattened_emb)
-        classification(embeddings, labels)
+        train_acc, test_acc = classification(embeddings, labels)
+        wandb.log({'train_accuracy':train_acc, 
+                    'test_accuracy':test_acc})
         # clustering(approxs, labels, k = 2)
         
 

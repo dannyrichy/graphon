@@ -30,7 +30,7 @@ NUM_GRAPHS_PER_GRAPHONS = 500
 NUM_NODES = None
 
 # Flag to store the graphs generated from graphons
-SAVE_GRAPHONS = False
+SAVE_GRAPHONS = True
 
 # Directory to store the graphs generated from graphons
 SAVE_GRAPHONS_LOC = f'./graphons_dir/{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHONS}_graphs.pkl'
