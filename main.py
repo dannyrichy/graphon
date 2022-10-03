@@ -6,6 +6,7 @@ from graphon.graphons import SynthGraphons
 from utils import classification, clustering
 import numpy as np
 import wandb
+from sweep_config import sweep_configuration
 
 
 
@@ -16,30 +17,32 @@ sweep_id = wandb.sweep(sweep=sweep_configuration, project='graphon')
 
 
 def main(config=None):
+
     with wandb.init(config=config):
-        config = wandb.config    
-        SAVE_GRAPHONS_LOC = f'./graphons_dir/{wandb.NUM_GRAPHONS}_graphons_{wandb.NUM_GRAPHS_PER_GRAPHONS}_graphs.pkl'
+        config = wandb.config   
+
+        SAVE_GRAPHONS_LOC = f'./graphons_dir/{config.NUM_GRAPHONS}_graphons_{config.NUM_GRAPHS_PER_GRAPHONS}_graphs.pkl'
         # synthetic data
         syn_graphons = SynthGraphons(NUM_GRAPHS_PER_GRAPHONS, DATA['SYNTHETIC_DATA'], num_nodes=config.NUM_NODES, save_graphons_loc = SAVE_GRAPHONS_LOC)
         if SAVE_GRAPHONS:
             print('storing graphs at ', SAVE_GRAPHONS_LOC)
-            graphs, labels = syn_graphons.data_simulation(start=100, stop=1000, save=SAVE_GRAPHONS, save_dir=SAVE_GRAPHONS_LOC)
+            graphs, labels = syn_graphons.data_simulation(start=100, stop=1000, save=SAVE_GRAPHONS)
         else:
             print('loading graphs from ', SAVE_GRAPHONS_LOC)
             graphs, labels = syn_graphons.load_graphs() 
 
-        # creating embeddings
-        if CREATE_EMBEDDINGS:
-            print('creating graph2vec embeddings')
-            tmp = np.split(np.array(graphs), NUM_GRAPHONS)
-            embed_all_graph2vec(emb_dir=EMBEDDING_DIR, graph_list=[list(tmp[i]) for i in range(NUM_GRAPHONS)], 
-                                                                    data = DATA['SYNTHETIC_DATA'])
+        # # creating embeddings
+        # if CREATE_EMBEDDINGS:
+        #     print('creating graph2vec embeddings')
+        #     tmp = np.split(np.array(graphs), config.NUM_GRAPHONS)
+        #     embed_all_graph2vec(emb_dir=EMBEDDING_DIR, graph_list=[list(tmp[i]) for i in range(config.NUM_GRAPHONS)], 
+        #                                                             data = DATA['SYNTHETIC_DATA'])
 
-        # classification of graph2vec embeddings
-        embeddings, true_labels = load_embeddings(names=DATA['SYNTHETIC_DATA'])
-        embeddings = np.squeeze(embeddings)
-        print('number of labels: ',len(true_labels))
-        classification(embeddings, true_labels)
+        # # classification of graph2vec embeddings
+        # embeddings, true_labels = load_embeddings(names=DATA['SYNTHETIC_DATA'])
+        # embeddings = np.squeeze(embeddings)
+        # print('number of labels: ',len(true_labels))
+        # classification(embeddings, true_labels)
         # clustering(embeddings, labels, k = 2, GRAPH2VEC=True)
 
 
@@ -53,6 +56,8 @@ def main(config=None):
         # clustering(approxs, labels, k = 2)
         
 
+
+wandb.agent(sweep_id, main, count = 5)
 
 '''
 if DOWNLOAD_DATA:

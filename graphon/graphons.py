@@ -120,7 +120,7 @@ class SynthGraphons():
         return graph_gen
 
 
-    def data_simulation(self, start=100, stop=1000, save=False, save_dir=self.save_graphons_loc):
+    def data_simulation(self, start=100, stop=1000, save=False):
         """
         Simulate data for the graphon model
 
