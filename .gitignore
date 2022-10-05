@@ -2,6 +2,7 @@
 graphons_dir/
 graph2vec_embeddings/
 wandb/
+*.ipynb
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
