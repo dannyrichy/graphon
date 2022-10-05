@@ -7,7 +7,7 @@ import networkx as nx
 import requests
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import cross_validate
+from sklearn.model_selection import cross_validate, train_test_split
 import torch
 import logging
 from clustering.graph2vec_clustering import graph2vec_clustering
@@ -106,27 +106,35 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     plt.show()
     return graphs
 
-def classification(embeddings, true_labels):
+def classification(embeddings, true_labels, GRAPH2VEC=False):
     """
     Classification of graph embeddings using Random Forests
     
     :param embeddings: List of embeddings
     :type embeddings: list
 
-    :param gt: Ground truth labels
-    :type gt: list
+    :param true_labels: Ground truth labels
+    :type true_labels: list
     """
-    print('Performing classification')
     permutation = np.random.permutation(len(embeddings)) # random shuffling
     X = np.take(embeddings, permutation, axis=0)
     y = np.take(true_labels, permutation, axis=0)
 
     # cross validation
-    scores = cross_validate(RandomForestClassifier(n_estimators=100), X, y, cv=5, scoring='accuracy', return_train_score=True)
-    print("Training accuracy for classification on embeddings: ", scores['train_score'].mean())
-    print("Test accuracy for classification on embeddings: ", scores['test_score'].mean())
+    # scores = cross_validate(RandomForestClassifier(n_estimators=100), X, y, cv=5, scoring='accuracy', return_train_score=True)
+    # print("Training accuracy for classification on embeddings: ", scores['train_score'].mean())
+    # print("Test accuracy for classification on embeddings: ", scores['test_score'].mean())
 
-    return scores['train_score'].mean(), scores['test_score'].mean()
+    # random forest classifier with train.test split
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    clf = RandomForestClassifier(n_estimators=100)
+    clf.fit(X_train, y_train)
+    print(f"Training accuracy for classification on embeddings using {'Graph2Vec' if GRAPH2VEC else 'Graphons'}: ", clf.score(X_train, y_train))
+    print(f"Test accuracy for classification on embeddings using using {'Graph2Vec' if GRAPH2VEC else 'Graphons'}: ", clf.score(X_test, y_test), "\n")
+    train_score = clf.score(X_train, y_train)
+    test_score = clf.score(X_test, y_test)
+
+    return train_score, test_score 
 
     # no cross validation
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
@@ -142,5 +150,6 @@ def clustering(graphs, true_labels, k=2, GRAPH2VEC=False):
     if GRAPH2VEC:
         adjusted_rand_score, error = graph2vec_clustering(li_emb = graphs, true_labels=true_labels, k=2)  
     else: 
-        graphon_clustering(graphs, true_labels, num_clusters=k)
-    print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.') 
+        adjusted_rand_score, error = graphon_clustering(graphs, true_labels, num_clusters=k)
+    # print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.') 
+    return adjusted_rand_score, error

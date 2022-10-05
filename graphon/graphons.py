@@ -7,9 +7,22 @@ from tqdm import tqdm
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SynthGraphons():
     
-    def __init__(self, num_graphs, graphons_keys, num_nodes, save_graphons_loc): # both graphons_keys and num_nodes are lists
-                                                         
-        self.num_graphs = num_graphs
+    def __init__(self, num_graphs_per_graphon, graphons_keys, num_nodes, save_graphons_loc): # both graphons_keys and num_nodes are lists
+        """
+        Constructor for the SynthGraphons class.
+        :param num_graphs_per_graphon: number of graphs to generate per each graphon
+        :type num_graphs: int
+
+        :param graphons_keys: list of graphons to generate
+        :type graphons_keys: List[int]
+
+        :param num_nodes: number of nodes to generate for each graphon, if None it will be generated randomly
+        :type num_nodes: int or None
+
+        :param save_graphons_loc: location to save the generated graphs
+        :type save_graphons_loc: str
+        """
+        self.num_graphs_per_graphon = num_graphs_per_graphon
         self.graphons_keys = [int(item) for item in graphons_keys] # 0 to 9
         self.name = ''
         self.num_nodes = num_nodes
@@ -24,7 +37,7 @@ class SynthGraphons():
         graphon = u * v
         return graphon
 
-
+   
     def graphon_2(self, x):
         self.name = 'w(u,v) = exp{-(u^0.7 + v^0.7))}'
         p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
@@ -108,10 +121,10 @@ class SynthGraphons():
 
     def _generate_graphs(self, graphon_key, n):
         graph_gen = []
-
+        
         for nn in n:
             x = torch.distributions.uniform.Uniform(0, 1).sample([nn]).to(device=DEVICE)
-            graph_prob = eval('self.graphon_' + str(graphon_key+1) + '(x)')
+            graph_prob = eval('self.graphon_' + str(graphon_key) + '(x)')
 
             graph = torch.distributions.binomial.Binomial(1, graph_prob).sample()
             graph = torch.triu(graph, diagonal=1)
@@ -139,15 +152,15 @@ class SynthGraphons():
         for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
             if self.num_nodes == 'None':
-                n = p[p > start][:self.num_graphs]
+                n = p[p > start][:self.num_graphs_per_graphon]
             else:
-                n = [self.num_nodes] * self.num_graphs
+                n = [self.num_nodes] * self.num_graphs_per_graphon
             #print('nodes ', n)
             g = self._generate_graphs(graphon, n)
             graphs = graphs + g
 
         for i in range(len(self.graphons_keys)):
-            l = i * np.ones(self.num_graphs)
+            l = i * np.ones(self.num_graphs_per_graphon)
             labels = labels + l.tolist()
         #print('graphs generated', len(graphs))
         #print('true labels ', labels)

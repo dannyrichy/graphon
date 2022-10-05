@@ -1,4 +1,3 @@
-from config import *
 from utils import *
 from karateclub import Graph2Vec
 import pickle
@@ -19,7 +18,7 @@ def graph2vec(graphs, emb_dir, savename=None):
         pickle.dump(embeddings, f)
 
 
-def embed_all_graph2vec(emb_dir = EMBEDDING_DIR, graph_list = [], data = []):
+def embed_all_graph2vec(emb_dir=None, graph_list = [], data = []):
     '''
     Creates a graph2vec embedding for the graphs in the graphlist.
     :param emb_dir: name of the directory where all the embeddings will be stored
@@ -36,7 +35,7 @@ def embed_all_graph2vec(emb_dir = EMBEDDING_DIR, graph_list = [], data = []):
         graph2vec(graphs=graphs, emb_dir=emb_dir, savename=savename)
 
 
-def load_embeddings(embedding_dir = EMBEDDING_DIR, names = []):
+def load_graphons_embeddings(embedding_dir=None, names = []):
     '''
     Loads the embeddings by name
     :param embedding_dir: directory where the embeddings are stored
