@@ -1,0 +1,28 @@
+DOWNLOAD_DATA: False
+
+# directory to store the graph2vec embeddings
+EMBEDDING_DIR: 'graph2vec_embeddings/'
+
+# Flag to create and store graph2vec embeddings
+CREATE_EMBEDDINGS: True
+
+# Number of graphons to create 
+NUM_GRAPHONS: 4
+
+# Dictionary of real-world datasets and synthetic datasets
+DATA: {'DATASETS' : ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'REDDIT-BINARY'], 
+        'SYNTHETIC_DATA' :  ['1', '2', '3', '4']}
+
+# Number of graphs to create per graphon
+NUM_GRAPHS_PER_GRAPHON: 15
+
+# Number of nodes in each synthetic graph (None to make the number of nodes random for each graph)
+NUM_NODES: None
+
+# Flag to store the graphs generated from graphons
+SAVE_GRAPHONS: True
+
+SWEEP: True
+# WANDB: graphon
+
+
