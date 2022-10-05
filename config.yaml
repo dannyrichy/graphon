@@ -22,6 +22,7 @@ NUM_NODES: None
 # Flag to store the graphs generated from graphons
 SAVE_GRAPHONS: True
 
+# Determines if we want to perform a sweep or not
 SWEEP: True
 # WANDB: graphon
 
