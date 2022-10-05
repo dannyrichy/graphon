@@ -80,9 +80,9 @@ def clustering_classification(
 
     if SWEEP:
         wandb.log({'g2v_class_train_accuracy': classification_train_acc, 
-                    'g2v_class_test_accuracy': classification_test_acc,
-                    'g2v_clustering_rand_score': clustering_rand_score,
-                    'g2v_clustering_error': clustering_error})
+                    'g2v_class_test_accuracy': classification_test_acc,})
+                    # 'g2v_clustering_rand_score': clustering_rand_score,
+                    # 'g2v_clustering_error': clustering_error})
 
 
 
@@ -102,9 +102,9 @@ def clustering_classification(
 
     if SWEEP:
         wandb.log({'graphons_class_train_accuracy': classification_train_acc, 
-                    'graphons_class_test_accuracy': classification_test_acc,
-                    'graphons_clustering_rand_score': clustering_rand_score,
-                    'graphons_clustering_error': clustering_error})
+                    'graphons_class_test_accuracy': classification_test_acc,})
+                    # 'graphons_clustering_rand_score': clustering_rand_score,
+                    # 'graphons_clustering_error': clustering_error})
     
 
 
