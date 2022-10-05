@@ -7,7 +7,7 @@ from tqdm import tqdm
 import sys
 import os
 sys.path.append(os.path.abspath('../'))
-from config import DEVICE
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 logger = logging.getLogger(__name__)
 

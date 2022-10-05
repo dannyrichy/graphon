@@ -1,15 +1,16 @@
 import torch
 import numpy as np
-from config import DEVICE
 import matplotlib.pyplot as plt
 import pickle
 from tqdm import tqdm
+
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 class SynthGraphons():
     
-    def __init__(self, num_graphs, graphons_keys, num_nodes, save_graphons_loc):#both graphons_keys and num_nodes 
-                                                             #are lists
+    def __init__(self, num_graphs, graphons_keys, num_nodes, save_graphons_loc): # both graphons_keys and num_nodes are lists
+                                                         
         self.num_graphs = num_graphs
-        self.graphons_keys = [int(item) for item in graphons_keys] #0 to 9
+        self.graphons_keys = [int(item) for item in graphons_keys] # 0 to 9
         self.name = ''
         self.num_nodes = num_nodes
         self.save_graphons_loc = save_graphons_loc
@@ -137,7 +138,7 @@ class SynthGraphons():
         labels = []
         for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
-            if self.num_nodes == None:
+            if self.num_nodes == 'None':
                 n = p[p > start][:self.num_graphs]
             else:
                 n = [self.num_nodes] * self.num_graphs

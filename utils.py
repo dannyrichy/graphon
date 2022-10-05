@@ -10,13 +10,11 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_validate
 import torch
 import logging
-
-import wandb
 from clustering.graph2vec_clustering import graph2vec_clustering
 from clustering.spectral_clustering import graphon_clustering
 from graphon.graphons import SynthGraphons
-from config import DEVICE
 
+DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # logger = logging.getLogger(__name__)
 
 def combine_datasets(li_dataset):
