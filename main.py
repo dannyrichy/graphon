@@ -65,7 +65,6 @@ def clustering_classification(
     # creating graph2vec embeddings of the graphs from graphons and storing them
     if CREATE_EMBEDDINGS:
         print('creating graph2vec embeddings')
-        print(graphs)
         tmp = np.split(np.array(graphs), NUM_GRAPHONS)
         embed_all_graph2vec(emb_dir=G2V_EMBEDDING_DIR, 
                             graph_list=[list(tmp[i]) for i in range(NUM_GRAPHONS)], data = DATA[1])
