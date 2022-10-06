@@ -1,4 +1,5 @@
 # from config import NUM_GRAPHONS, NUM_GRAPHS_PER_GRAPHONS, DATA, CREATE_EMBEDDINGS, EMBEDDING_DIR, SAVE_GRAPHONS, SAVE_GRAPHONS_LOC
+import os
 from graph2vec.utils import embed_all_graph2vec, load_graphons_embeddings
 from graphon.hist_estimator import hist_approximate
 from sklearn.ensemble import RandomForestClassifier
@@ -64,6 +65,7 @@ def clustering_classification(
     # creating graph2vec embeddings of the graphs from graphons and storing them
     if CREATE_EMBEDDINGS:
         print('creating graph2vec embeddings')
+        print(graphs)
         tmp = np.split(np.array(graphs), NUM_GRAPHONS)
         embed_all_graph2vec(emb_dir=G2V_EMBEDDING_DIR, 
                             graph_list=[list(tmp[i]) for i in range(NUM_GRAPHONS)], data = DATA[1])
@@ -122,6 +124,8 @@ if __name__ == '__main__':
     with open('sweep_config.yaml', 'r') as f:
             sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
 
+    if not os.path.exists('graphons_dir'):
+        os.makedirs('graphons_dir')
     # if we are sweeping, we update the config with the default values and start the sweep
     # else we run the code using the config_def values
     if config_def['SWEEP']:
