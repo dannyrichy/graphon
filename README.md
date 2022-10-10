@@ -1,5 +1,5 @@
 # Graphon
-Project Repository for DD2430
+Project Repository for DD2430 in colloboration with (SEB)[https://seb.se/]
 
 # Tasks
 ## Classification and clustering
