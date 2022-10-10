@@ -3,6 +3,7 @@ Helps generate synthetic dataset for validating different task
 """
 
 import pickle
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
