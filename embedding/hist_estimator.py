@@ -1,24 +1,20 @@
 import logging
 
 import torch
-
-import graphon
 from tqdm import tqdm
-import sys
-import os
-sys.path.append(os.path.abspath('../'))
+
 from config import DEVICE
 
 logger = logging.getLogger(__name__)
 
 
-def hist_approximate(graphs, n0=30):
+def histogram_embeddings(graphs, n0=30):
     """
-    Approximating graphon using histogram estimate
+    Approximating data_loader using histogram estimate
     Reference: https://github.com/mahalakshmi-sabanayagam/Clustering-Testing-Networks/blob/96989cbade5eb14d2426de7e1b6d277e55b76766/DSC_SSDP.py
 
-    :param graphs: List of graphs for which graphon has to be estimated
-    :type graph: List of torch.Tensor
+    :param graphs: List of graphs for which data_loader has to be estimated
+    :type graphs: List of torch.Tensor
 
     :param n0: Size of the binned matrix
     :type n0: int
@@ -44,7 +40,7 @@ def hist_approximate(graphs, n0=30):
         logger.debug(f"Sorted graph:\n{graph_sorted}")
 
         # histogram approximation
-        logger.info("Approximating the graphon")
+        logger.info("Approximating the data_loader")
         graph_apprx = torch.zeros((n0, n0), dtype=torch.float64).to(device=DEVICE)
         for i in range(n0):
             for j in range(i + 1):

@@ -4,7 +4,7 @@ Configurations for the project
 import torch
 
 
-# Flag for downloading the data
+# Flag for downloading the data_loader
 DOWNLOAD_DATA = False
 
 # Flag for using GPU
@@ -23,7 +23,7 @@ NUM_GRAPHONS = 4
 DATA = {'DATASETS' : ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'REDDIT-BINARY'], 
         'SYNTHETIC_DATA' :  [str(i) for i in range(0, NUM_GRAPHONS)]}
 
-# Number of graphs to create per graphon
+# Number of graphs to create per data_loader
 NUM_GRAPHS_PER_GRAPHONS = 500
 
 # Number of nodes in each synthetic graph (None to make the number of nodes random for each graph)

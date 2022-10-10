@@ -4,18 +4,17 @@ from functools import reduce
 
 import matplotlib.pyplot as plt
 import networkx as nx
-import requests
 import numpy as np
+import requests
+import torch
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import cross_validate
-import torch
-import logging
 
 import wandb
 from clustering.graph2vec_clustering import graph2vec_clustering
 from clustering.spectral_clustering import graphon_clustering
-from graphon.graphons import SynthGraphons
 from config import DEVICE
+
 
 # logger = logging.getLogger(__name__)
 
@@ -69,7 +68,7 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     """
     print('Loading graph dataset: ' + str(name))
     G = nx.Graph()
-    # load data
+    # load data_loader
     path = 'datasets/' + name + '/'
     data_adj = np.loadtxt(path + name + '_A.txt', delimiter=',').astype(int)
     data_graph_indicator = np.loadtxt(path + name + '_graph_indicator.txt', delimiter=',').astype(int)
@@ -108,18 +107,19 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     plt.show()
     return graphs
 
+
 def classification(embeddings, true_labels):
     """
     Classification of graph embeddings using Random Forests
     
     :param embeddings: List of embeddings
-    :type embeddings: list
+    :type embeddings: Union[list,numpy.ndarray]
 
-    :param gt: Ground truth labels
-    :type gt: list
+    :param true_labels: Ground truth labels
+    :type true_labels: list
     """
     print('Performing classification')
-    permutation = np.random.permutation(len(embeddings)) # random shuffling
+    permutation = np.random.permutation(len(embeddings))  # random shuffling
     X = np.take(embeddings, permutation, axis=0)
     y = np.take(true_labels, permutation, axis=0)
 
@@ -137,11 +137,11 @@ def classification(embeddings, true_labels):
     # y_pred=clf.predict(X_test)
     # accuracy_classification = metrics.accuracy_score(y_test, y_pred)
     # print("Accuracy:", accuracy_classification)
-    
+
 
 def clustering(graphs, true_labels, k=2, GRAPH2VEC=False):
     if GRAPH2VEC:
-        adjusted_rand_score, error = graph2vec_clustering(li_emb = graphs, true_labels=true_labels, k=2)  
-    else: 
-        graphon_clustering(graphs, true_labels, num_clusters=k)
-    print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.') 
+        adjusted_rand_score, error = graph2vec_clustering(li_emb=graphs, true_labels=true_labels, k=2)
+    else:
+        adjusted_rand_score, error = graphon_clustering(graphs, true_labels, num_clusters=k)
+    print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.')

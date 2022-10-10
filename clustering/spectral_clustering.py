@@ -8,7 +8,6 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 
 from config import DEVICE
-from graphon.hist_estimator import hist_approximate
 from clustering.utils import error, generate_graph_laplacian, compute_spectrum_graph_laplacian
 import logging
 
@@ -95,7 +94,7 @@ def spectral_clustering(affinity_mat, num_clusters=3):
 
 def graphon_clustering(graphs, true_labels, num_clusters=3):
     """
-    Perform graphon clustering and returns the error scores.
+    Perform data_loader clustering and returns the error scores.
 
     :param graphs: List of graphs
     :type graphs: list
@@ -103,7 +102,7 @@ def graphon_clustering(graphs, true_labels, num_clusters=3):
     :param true_labels: Ground truth
     :type true_labels: list
 
-    :param n0: number of nodes in graphon approximation
+    :param n0: number of nodes in data_loader approximation
     :type n0: int
 
     :param num_clusters: Number of clusters for spectral clustering
