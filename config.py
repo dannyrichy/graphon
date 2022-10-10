@@ -24,7 +24,7 @@ DATA = {'DATASETS' : ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'R
         'SYNTHETIC_DATA' :  [str(i) for i in range(0, NUM_GRAPHONS)]}
 
 # Number of graphs to create per data_loader
-NUM_GRAPHS_PER_GRAPHONS = 500
+NUM_GRAPHS_PER_GRAPHONS = 10
 
 # Number of nodes in each synthetic graph (None to make the number of nodes random for each graph)
 NUM_NODES = None

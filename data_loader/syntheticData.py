@@ -202,7 +202,6 @@ class SynthGraphons:
         """
         return torch.log(1 + 0.5 * torch.max(u, v))
 
-
     def _generate_graphs(self, graphon_key, n):
         """
 
@@ -269,7 +268,8 @@ class SynthGraphons:
         """
         Save graphs and labels to a file
         """
-        print('Storing graphs at ',  SAVE_GRAPHONS_LOC)
+        print('Storing graphs at ', SAVE_GRAPHONS_LOC)
+        Path(SAVE_GRAPHONS_LOC).mkdir(parents=True, exist_ok=True)
         with open(SAVE_GRAPHONS_LOC, 'wb') as f:
             pickle.dump((self.graphs, self.labels), f)
 
