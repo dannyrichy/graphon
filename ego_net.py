@@ -29,7 +29,7 @@ def get_ego_nets(download_data=False, hopping_dist=1):
     """
     Function used to generate the egonets
 
-    :param download_data: download the big reddit data or not
+    :param download_data: download the big reddit data_loader or not
     :type download_data: bool
 
     :param hopping_dist: hopping distance while generating the ego nets
@@ -38,7 +38,7 @@ def get_ego_nets(download_data=False, hopping_dist=1):
     :return: ego_graphs and labels
     """
     if download_data:
-        logger.info("Downloading and extracting graph data")
+        logger.info("Downloading and extracting graph data_loader")
         download_datasets(dataset_links=['https://data.dgl.ai/dataset/reddit.zip'])
 
     reddit, labels = load_reddit_big()

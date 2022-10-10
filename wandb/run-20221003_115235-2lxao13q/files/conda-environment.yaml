@@ -65,7 +65,7 @@ dependencies:
   - submitit=1.2.1=pyh44b312d_0
   - tbb=2021.5.0=h91493d7_2
   - tensorboard=2.6.0=pyhd8ed1ab_1
-  - tensorboard-data-server=0.6.0=py39hcbf5309_2
+  - tensorboard-data_loader-server=0.6.0=py39hcbf5309_2
   - tensorboard-plugin-wit=1.8.1=pyhd8ed1ab_0
   - tk=8.6.12=h8ffe710_0
   - tqdm=4.64.1=pyhd8ed1ab_0
@@ -170,7 +170,7 @@ dependencies:
     - smart-open==6.2.0
     - smmap==5.0.0
     - soupsieve==2.3.2.post1
-    - stack-data==0.5.0
+    - stack-data_loader==0.5.0
     - terminado==0.15.0
     - threadpoolctl==3.1.0
     - timm==0.4.5
