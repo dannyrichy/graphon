@@ -270,7 +270,6 @@ class SynthGraphons:
         Save graphs and labels to a file
         """
         print('Storing graphs at ', SAVE_GRAPHONS_LOC)
-        Path(SAVE_GRAPHONS_LOC).mkdir(parents=True, exist_ok=True)
         with open(SAVE_GRAPHONS_LOC, 'wb') as f:
             pickle.dump((self.graphs, self.labels), f)
 

@@ -128,7 +128,7 @@ def classification(embeddings, true_labels):
     print("Training accuracy for classification on embeddings: ", scores['train_score'].mean())
     print("Test accuracy for classification on embeddings: ", scores['test_score'].mean())
 
-    wandb.log({"train_acc": scores['train_score'].mean(), "test_acc": scores['test_score'].mean()})
+    # wandb.log({"train_acc": scores['train_score'].mean(), "test_acc": scores['test_score'].mean()})
 
     # no cross validation
     # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3)
