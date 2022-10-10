@@ -202,8 +202,8 @@ class SynthGraphons:
         """
         return torch.log(1 + 0.5 * torch.max(u, v))
 
-    @staticmethod
-    def _generate_graphs(graphon_key, n):
+
+    def _generate_graphs(self, graphon_key, n):
         """
 
         :param graphon_key:
@@ -249,7 +249,7 @@ class SynthGraphons:
         """
         for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
-            if NUM_NODES:
+            if not NUM_NODES:
                 n = p[p > start][:self.num_graphs]
             else:
                 n = [NUM_NODES] * self.num_graphs
@@ -257,8 +257,8 @@ class SynthGraphons:
             self.graphs = self.graphs + g
 
         for i in range(len(self.graphons_keys)):
-            l = i * np.ones(self.num_graphs)
-            self.labels = self.labels + l.tolist()
+            _label = i * np.ones(self.num_graphs)
+            self.labels = self.labels + _label.tolist()
 
         if save:
             self.save_graphs()

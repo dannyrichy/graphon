@@ -35,6 +35,7 @@ def main():
     classification(embeddings, labels)
     clustering(hist_embeddings, labels, k=2)
 
+
 # if DOWNLOAD_DATA:
 #     download_datasets()
 #
@@ -51,3 +52,6 @@ def main():
 # fb_reddit_deezer, gt_fb_reddit_deezer = combine_datasets([fb, reddit, deezer])
 # github_reddit_deezer, gt_github_reddit_deezer = combine_datasets([github, reddit, deezer])
 # fb_github_reddit_deezer, gt_fb_github_reddit_deezer = combine_datasets([fb, github, reddit, deezer])
+
+if __name__ == '__main__':
+    main()
