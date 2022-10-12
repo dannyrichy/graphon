@@ -1,3 +1,4 @@
+from pathlib import Path
 from embedding import create_g2v_embeddings, load_embeddings, histogram_embeddings
 from data_loader.syntheticData import SynthGraphons
 from utils import classification, clustering
@@ -43,7 +44,9 @@ def clustering_classification(
     
 ):
     NUM_GRAPHONS = len(DATA[1])
-    GRAPHONS_DIR = f'./graphons_dir/{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHON}_graphs.pkl'
+    parent_dir = Path('graphons_dir')
+    parent_dir.mkdir(exist_ok=True, parents=True)
+    GRAPHONS_DIR = parent_dir.joinpath(f'{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHON}_graphs.pkl')
 
     # synthetic data_loader
     if SAVE_GRAPHONS:
@@ -108,14 +111,13 @@ if __name__ == '__main__':
     with open("config.yaml", 'r') as stream:
         config_def = yaml.load(stream, Loader=yaml.FullLoader)
 
-    with open('sweep_config.yaml', 'r') as f:
-            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
-
-    if not os.path.exists('graphons_dir'):
-        os.makedirs('graphons_dir')
     # if we are sweeping, we update the config with the default values and start the sweep
     # else we run the code using the config_def values
     if config_def['SWEEP']:
+
+        with open('sweep_config.yaml', 'r') as f:
+            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
+
         wandb.login()
         sweep_configuration = update_sweep_config(sweep_configuration, config_def)
         sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')

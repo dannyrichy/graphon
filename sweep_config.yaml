@@ -3,9 +3,6 @@
 method: grid
 name: sweep_1_classification
 parameters: 
-    # config: 
-    #     value: 
-    #         - config.yaml
     NUM_GRAPHS_PER_GRAPHON: 
         values: 
             - 10
