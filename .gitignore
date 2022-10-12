@@ -4,6 +4,7 @@ graph2vec_embeddings/
 wandb/
 *.ipynb
 .vscode/
+todo.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
