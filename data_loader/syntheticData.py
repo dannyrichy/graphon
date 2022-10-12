@@ -10,7 +10,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
-from config import DEVICE, NUM_NODES, SAVE_GRAPHONS_LOC
+from config import DEVICE
 
 
 class SynthGraphons:
@@ -32,13 +32,14 @@ class SynthGraphons:
     graphs = list()
     labels = list()
 
-    def __init__(self, num_graphs, graphons_keys):
+    def __init__(self, num_nodes, num_graphs, graphons_keys):
         """
         :param num_graphs:
         :type num_graphs:
         :param graphons_keys:
         :type graphons_keys:
         """
+        self.num_nodes = num_nodes
         self.num_graphs = num_graphs
         self.graphons_keys = [int(item) for item in graphons_keys]  # 0 to 9
 
@@ -222,7 +223,7 @@ class SynthGraphons:
             p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
             u = p + x.reshape(1, -1)
             v = p + x.reshape(-1, 1)
-            graph_prob = eval('self.graphon_' + str(graphon_key + 1) + '(u, v)')
+            graph_prob = eval('self.graphon_' + str(graphon_key) + '(u, v)')
 
             graph = torch.distributions.binomial.Binomial(1, graph_prob).sample()
             graph = torch.triu(graph, diagonal=1)
@@ -231,7 +232,7 @@ class SynthGraphons:
 
         return graph_gen
 
-    def data_simulation(self, start=100, stop=1000, save=False):
+    def data_simulation(self, start=100, stop=1000):
         """
         Simulate data_loader for the data_loader model
 
@@ -241,18 +242,16 @@ class SynthGraphons:
         :param stop: end of the range of the number of nodes
         :type stop: int
 
-        :param save:
-        :type save:
 
         :return: list of graphs and list of labels
         :rtype: list, list
         """
         for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
-            if not NUM_NODES:
+            if not self.num_nodes:
                 n = p[p > start][:self.num_graphs]
             else:
-                n = [NUM_NODES] * self.num_graphs
+                n = [self.num_nodes] * self.num_graphs
             g = self._generate_graphs(graphon, n)
             self.graphs = self.graphs + g
 
@@ -260,29 +259,26 @@ class SynthGraphons:
             _label = i * np.ones(self.num_graphs)
             self.labels = self.labels + _label.tolist()
 
-        if save:
-            self.save_graphs()
-
         return self.graphs, self.labels
 
-    def save_graphs(self):
+    def save_graphs(self, path):
         """
         Save graphs and labels to a file
         """
-        print('Storing graphs at ', SAVE_GRAPHONS_LOC)
-        with open(SAVE_GRAPHONS_LOC, 'wb') as f:
+        print('Storing graphs at ', path)
+        with open(path, 'wb') as f:
             pickle.dump((self.graphs, self.labels), f)
 
     @staticmethod
-    def load_graphs():
+    def load_graphs(path):
         """
         Load graphs and labels from a file
 
         :return: list of graphs and list of labels
         :rtype: list, list
         """
-        print('Loading graphs from ', SAVE_GRAPHONS_LOC)
-        with open(SAVE_GRAPHONS_LOC, 'rb') as f:
+        print('Loading graphs from ', path)
+        with open(path, 'rb') as f:
             graphs, labels = pickle.load(f)
         return graphs, labels
 
