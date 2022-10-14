@@ -51,32 +51,33 @@ def clustering_classification(
     # synthetic data_loader
     if SAVE_GRAPHONS:
         syn_graphons = SynthGraphons(NUM_NODES, NUM_GRAPHS_PER_GRAPHON, DATA[1])
-        graphs, labels = syn_graphons.data_simulation(start=100, stop=1000)
+        graphs, true_labels = syn_graphons.data_simulation(start=100, stop=1000)
         syn_graphons.save_graphs(GRAPHONS_DIR)
     else:
-        graphs, labels = SynthGraphons.load_graphs(path=GRAPHONS_DIR)
+        graphs, true_labels = SynthGraphons.load_graphs(path=GRAPHONS_DIR)
 
     # creating graph2vec embeddings of the graphs from graphons and storing them
     if CREATE_EMBEDDINGS:
         print('Creating graph2vec embeddings')
-        create_g2v_embeddings(graph_list=graphs, true_labels=labels, dir_name=G2V_EMBEDDING_DIR)
+        create_g2v_embeddings(graph_list=graphs, true_labels=true_labels, dir_name=G2V_EMBEDDING_DIR)
 
     # classification of graph2vec embeddings
     embeddings, true_labels = load_embeddings(dir_name=G2V_EMBEDDING_DIR)
     embeddings = np.squeeze(embeddings)
     print('Number of labels: ', len(true_labels))
     
-    print('\nPerforming classification on histogram approximation')
-    classification_train_acc, classification_test_acc = classification(embeddings, true_labels, GRAPH2VEC=True)
+    # print('\nPerforming classification on histogram approximation')
+    # classification_train_acc, classification_test_acc = classification(embeddings, true_labels, GRAPH2VEC=True)
 
-    # print('performing clustering on histogram approximation')
-    # clustering_rand_score, clustering_error = clustering(embeddings, labels, k=NUM_GRAPHONS, GRAPH2VEC=True)
+    print('performing clustering on histogram approximation')
+    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUM_GRAPHONS, GRAPH2VEC=True)
 
     if SWEEP:
-        wandb.log({'g2v_class_train_accuracy': classification_train_acc, 
-                    'g2v_class_test_accuracy': classification_test_acc,})
-                    # 'g2v_clustering_rand_score': clustering_rand_score,
-                    # 'g2v_clustering_error': clustering_error})
+        wandb.log({
+            # 'g2v_class_train_accuracy': classification_train_acc, 
+            #         'g2v_class_test_accuracy': classification_test_acc,})
+                    'g2v_clustering_rand_score': clustering_rand_score,
+                    'g2v_clustering_error': clustering_error})
 
 
 
@@ -85,20 +86,22 @@ def clustering_classification(
     hist_embeddings = histogram_embeddings(graphs, n0=N0) 
     embeddings = []
     for i in range(len(hist_embeddings)):
-        flattened_emb = hist_embeddings[i].numpy().flatten()
-        embeddings.append(flattened_emb)
+        # flattened_emb = hist_embeddings[i].numpy().flatten()
+        # embeddings.append(flattened_emb)
+        embeddings.append(hist_embeddings[i].numpy())
 
-    print('\nPerforming classification on histogram approximation')
-    classification_train_acc, classification_test_acc = classification(embeddings, labels)
+    # print('\nPerforming classification on histogram approximation')
+    # classification_train_acc, classification_test_acc = classification(embeddings, labels)
 
-    # print('performing clustering on histogram approximation')
-    # clustering_rand_score, clustering_error = clustering(embeddings, labels, k = NUM_GRAPHONS, GRAPH2VEC=False)
+    print('performing clustering on histogram approximation')
+    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k = NUM_GRAPHONS, GRAPH2VEC=False)
 
     if SWEEP:
-        wandb.log({'graphons_class_train_accuracy': classification_train_acc, 
-                    'graphons_class_test_accuracy': classification_test_acc,})
-                    # 'graphons_clustering_rand_score': clustering_rand_score,
-                    # 'graphons_clustering_error': clustering_error})
+        wandb.log({
+            # 'graphons_class_train_accuracy': classification_train_acc, 
+            #         'graphons_class_test_accuracy': classification_test_acc,})
+                    'graphons_clustering_rand_score': clustering_rand_score,
+                    'graphons_clustering_error': clustering_error})
     
 
 def sweep(config=None):

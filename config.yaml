@@ -26,6 +26,6 @@ NUM_NODES: 150
 SAVE_GRAPHONS: True
 
 # Determines if we want to perform a sweep or not
-SWEEP: True
+SWEEP: False
 
 

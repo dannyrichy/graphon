@@ -139,8 +139,8 @@ def classification(embeddings, true_labels, GRAPH2VEC=False):
 
 def clustering(graphs, true_labels, k=2, GRAPH2VEC=False):
     if GRAPH2VEC:
-        adjusted_rand_score, error = graph2vec_clustering(li_emb = graphs, true_labels=true_labels, k=2)  
+        adjusted_rand_score, error = graph2vec_clustering(li_emb=graphs, true_labels=true_labels, k=k)  
     else: 
         adjusted_rand_score, error = graphon_clustering(graphs, true_labels, num_clusters=k)
-    # print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.') 
+    print(f"\nAdjusted Random Score --> {adjusted_rand_score}\nHungarian Score --> {error} \nusing {'Graph2Vec' if GRAPH2VEC else 'Graphons'}\n")
     return adjusted_rand_score, error
