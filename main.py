@@ -12,7 +12,7 @@ Have to make the code in the form of a function that takes in all the needed par
 Then when we want to sweep we pass the sweep parameters, else, the normal ones.
 '''
 
-def update_sweep_config(sweep_config, config_def):
+def update_config(sweep_config, config_def):
     """
     Updated the sweep config with the default config, adding the default values 
 
@@ -25,13 +25,28 @@ def update_sweep_config(sweep_config, config_def):
     :return: the updated sweep config
     :rtype: dict
     """
-    for key, value in config_def.items():
-        if key not in sweep_config['parameters'].keys(): 
-            sweep_config['parameters'][key] = {'value': value}
-    return sweep_config
+    real_data_params = ['DOWNLOAD_DATA']
+    synth_data_params = ['NUM_GRAPHS_PER_GRAPHON', 'NUM_NODES', 'N0']
 
+    if config_def['SYNTH_DATA']:
+        to_remove = real_data_params
+    else:
+        to_remove = synth_data_params
+    
+    for param in to_remove:
+        if param in sweep_config['parameters']:
+            del sweep_config['parameters'][param]
+        del config_def[param]
+    del config_def['SYNTH_DATA']
 
-def clustering_classification(
+    if config_def['SWEEP']:
+        for key, value in config_def.items():
+            if key not in sweep_config['parameters'].keys(): 
+                sweep_config['parameters'][key] = {'value': value}
+        return sweep_config
+    return config_def
+
+def clustering_classification_synth(
     NUM_GRAPHS_PER_GRAPHON=100,
     NUM_NODES=None,
     N0=30,
@@ -39,7 +54,6 @@ def clustering_classification(
     CREATE_EMBEDDINGS=False,
     G2V_EMBEDDING_DIR=None,
     DATA=None,
-    DOWNLOAD_DATA=False,
     SWEEP=False,
     
 ):
@@ -66,18 +80,18 @@ def clustering_classification(
     embeddings = np.squeeze(embeddings)
     print('Number of labels: ', len(true_labels))
     
-    # print('\nPerforming classification on histogram approximation')
-    # classification_train_acc, classification_test_acc = classification(embeddings, true_labels, GRAPH2VEC=True)
+    print('\nPerforming classification on histogram approximation')
+    classification_train_acc, classification_test_acc = classification(embeddings, true_labels, GRAPH2VEC=True)
 
-    print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUM_GRAPHONS, GRAPH2VEC=True)
+    # print('performing clustering on histogram approximation')
+    # clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUM_GRAPHONS, GRAPH2VEC=True)
 
     if SWEEP:
         wandb.log({
-            # 'g2v_class_train_accuracy': classification_train_acc, 
-            #         'g2v_class_test_accuracy': classification_test_acc,})
-                    'g2v_clustering_rand_score': clustering_rand_score,
-                    'g2v_clustering_error': clustering_error})
+            'g2v_class_train_accuracy': classification_train_acc, 
+                    'g2v_class_test_accuracy': classification_test_acc,})
+                    # 'g2v_clustering_rand_score': clustering_rand_score,
+                    # 'g2v_clustering_error': clustering_error})
 
 
 
@@ -86,27 +100,27 @@ def clustering_classification(
     hist_embeddings = histogram_embeddings(graphs, n0=N0) 
     embeddings = []
     for i in range(len(hist_embeddings)):
-        # flattened_emb = hist_embeddings[i].numpy().flatten()
-        # embeddings.append(flattened_emb)
-        embeddings.append(hist_embeddings[i].numpy())
+        flattened_emb = hist_embeddings[i].numpy().flatten()
+        embeddings.append(flattened_emb)
 
-    # print('\nPerforming classification on histogram approximation')
-    # classification_train_acc, classification_test_acc = classification(embeddings, labels)
+    print('\nPerforming classification on histogram approximation')
+    classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
 
-    print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k = NUM_GRAPHONS, GRAPH2VEC=False)
+    # print('performing clustering on histogram approximation')
+    # clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k = NUM_GRAPHONS, GRAPH2VEC=False)
 
     if SWEEP:
         wandb.log({
-            # 'graphons_class_train_accuracy': classification_train_acc, 
-            #         'graphons_class_test_accuracy': classification_test_acc,})
-                    'graphons_clustering_rand_score': clustering_rand_score,
-                    'graphons_clustering_error': clustering_error})
+            'graphons_class_train_accuracy': classification_train_acc, 
+                    'graphons_class_test_accuracy': classification_test_acc,})
+                    # 'graphons_clustering_rand_score': clustering_rand_score,
+                    # 'graphons_clustering_error': clustering_error})
+
     
 
 def sweep(config=None):
     with wandb.init(config=config):
-            clustering_classification(**wandb.config)
+            clustering_classification_synth(**wandb.config)
 
 
 if __name__ == '__main__':
@@ -114,33 +128,29 @@ if __name__ == '__main__':
     with open("config.yaml", 'r') as stream:
         config_def = yaml.load(stream, Loader=yaml.FullLoader)
 
+    with open('sweep_config.yaml', 'r') as f:
+            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
+    final_config = update_config(sweep_configuration, config_def)
+
     # if we are sweeping, we update the config with the default values and start the sweep
     # else we run the code using the config_def values
     if config_def['SWEEP']:
-
-        with open('sweep_config.yaml', 'r') as f:
-            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
-
         wandb.login()
-        sweep_configuration = update_sweep_config(sweep_configuration, config_def)
         sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')
         wandb.agent(sweep_id, sweep)
     else:
-        clustering_classification(**config_def)
+        clustering_classification_synth(**final_config)
 
 
 '''
 if DOWNLOAD_DATA:
     download_datasets()
-
-
 # loading graphs
 print(DATASETS)
 fb = load_graph(min_num_nodes=100, name=DATASETS[0])
 github = load_graph(min_num_nodes=950, name=DATASETS[1])
 reddit = load_graph(min_num_nodes=3200, name=DATASETS[2])
 deezer = load_graph(min_num_nodes=200, name=DATASETS[3])
-
 fb_github_reddit, gt_fb_github_reddit = combine_datasets([fb, github, reddit])
 fb_github_deezer, gt_fb_github_deezer = combine_datasets([fb, github, deezer])
 fb_reddit_deezer, gt_fb_reddit_deezer = combine_datasets([fb, reddit, deezer])
