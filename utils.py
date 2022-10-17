@@ -13,7 +13,6 @@ import torch
 from clustering.graph2vec_clustering import graph2vec_clustering
 from clustering.spectral_clustering import graphon_clustering
 from config import DEVICE
-from numba import jit, cuda
 
 
 def combine_datasets(li_dataset):
@@ -50,8 +49,6 @@ def download_datasets(dataset_links=None):
         zipfile.ZipFile(io.BytesIO(requests.get(link).content)).extractall()
 
 
-# taken from https://github.com/JiaxuanYou/graph-generation/blob/3444b8ad2fd7ecb6ade45086b4c75f8e2e9f29d1/data.py#L24
-@jit(target_backend='cuda')
 def load_graph(min_num_nodes=10, name='ENZYMES'):
     """
     Load real world graph dataset
@@ -83,7 +80,8 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     # nx_graphs = []
     max_nodes = 0
     all_nodes = []
-    for i in range(graph_num):
+    # for i in range(graph_num):
+    for i in range(200):
         # find the nodes for each graph
         nodes = node_list[data_graph_indicator == i + 1]
         G_sub = G.subgraph(nodes)
