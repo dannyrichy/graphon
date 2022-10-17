@@ -27,7 +27,7 @@ NUM_NODES: 150
 SAVE_GRAPHONS: True
 
 # decide wheter we want to use synth data or real data
-SYNTH_DATA: True
+SYNTH_DATA: False
 
 # Determines if we want to perform a sweep or not
 SWEEP: False
