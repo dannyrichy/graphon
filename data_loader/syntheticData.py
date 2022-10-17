@@ -248,7 +248,7 @@ class SynthGraphons:
         """
         for graphon in tqdm(self.graphons_keys):
             p = torch.randperm(stop)
-            if not self.num_nodes:
+            if self.num_nodes == 'None':
                 n = p[p > start][:self.num_graphs]
             else:
                 n = [self.num_nodes] * self.num_graphs

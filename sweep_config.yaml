@@ -1,22 +1,27 @@
 # Define sweep config
 
 method: grid
-name: sweep_1_classification
+name: clustering_exp
 parameters: 
     NUM_GRAPHS_PER_GRAPHON: 
         values: 
-            - 10
+            - 30
             - 50
-    # NUM_NODES: 
-    #     values: 
-    #         - None
-    #         - 100 
+            - 100
+    NUM_NODES: 
+        values: 
+            - 'None'
+            - 100 
+            - 250
     DATA:  
         values:
             - [[], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
-            - [[], ['1', '2']]
-            - [[], ['1', '2', '3']]
-            - [[], ['1', '2', '3', '4']]
+            - [[], ['1', '2', '3', '4', '5']]
+    N0:
+        values:
+            - 20
+            - 30
+            - 50
      
 
 

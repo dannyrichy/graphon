@@ -49,7 +49,6 @@ def download_datasets(dataset_links=None):
         zipfile.ZipFile(io.BytesIO(requests.get(link).content)).extractall()
 
 
-# taken from https://github.com/JiaxuanYou/graph-generation/blob/3444b8ad2fd7ecb6ade45086b4c75f8e2e9f29d1/data.py#L24
 def load_graph(min_num_nodes=10, name='ENZYMES'):
     """
     Load real world graph dataset
@@ -70,7 +69,6 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     data_adj = np.loadtxt(path + name + '_A.txt', delimiter=',').astype(int)
     data_graph_indicator = np.loadtxt(path + name + '_graph_indicator.txt', delimiter=',').astype(int)
     data_tuple = list(map(tuple, data_adj))
-
     # add edges
     G.add_edges_from(data_tuple)
     G.remove_nodes_from(list(nx.isolates(G)))
@@ -97,11 +95,11 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     print('Loaded and the total number of graphs are ', len(graphs))
     print('max num of nodes is ', max_nodes)
     print('total graphs ', len(graphs))
-    print('histogram of number of nodes in ', name)
+    # print('histogram of number of nodes in ', name)
     # print(all_nodes)
-    plt.hist(all_nodes)
-    plt.title(f'Number of nodes for each graph in {name}')
-    plt.show()
+    # plt.hist(all_nodes)
+    # plt.title(f'Number of nodes for each graph in {name}')
+    # plt.show()
     return graphs
 
 def classification(embeddings, true_labels, GRAPH2VEC=False):
@@ -139,8 +137,43 @@ def classification(embeddings, true_labels, GRAPH2VEC=False):
 
 def clustering(graphs, true_labels, k=2, GRAPH2VEC=False):
     if GRAPH2VEC:
-        adjusted_rand_score, error = graph2vec_clustering(li_emb = graphs, true_labels=true_labels, k=2)  
+        adjusted_rand_score, error = graph2vec_clustering(li_emb=graphs, true_labels=true_labels, k=k)  
     else: 
         adjusted_rand_score, error = graphon_clustering(graphs, true_labels, num_clusters=k)
-    # print(f'Adjusted Rand Score: {adjusted_rand_score} and Error: {error} for {k} clusters.') 
+    print(f"\nAdjusted Random Score --> {adjusted_rand_score}\nHungarian Score --> {error} \nusing {'Graph2Vec' if GRAPH2VEC else 'Graphons'}\n")
     return adjusted_rand_score, error
+
+
+def update_config(sweep_config, config_def):
+    """
+    Updated the sweep config with the default config, adding the default values 
+
+    :param sweep_config: the sweep config to be updated
+    :type sweep_config: dict
+
+    :param config_def: the default config
+    :type config_def: dict
+
+    :return: the updated sweep config
+    :rtype: dict
+    """
+    # real_data_params = ['DOWNLOAD_DATA']
+    # synth_data_params = ['NUM_GRAPHS_PER_GRAPHON', 'NUM_NODES', 'N0']
+
+    # if config_def['SYNTH_DATA']:
+    #     to_remove = real_data_params
+    # else:
+    #     to_remove = synth_data_params
+    
+    # for param in to_remove:
+    #     if param in sweep_config['parameters']:
+    #         del sweep_config['parameters'][param]
+    #     del config_def[param]
+    # del config_def['SYNTH_DATA']
+
+    if config_def['SWEEP']:
+        for key, value in config_def.items():
+            if key not in sweep_config['parameters'].keys(): 
+                sweep_config['parameters'][key] = {'value': value}
+        return sweep_config
+    return config_def
