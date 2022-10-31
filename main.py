@@ -1,4 +1,8 @@
-from pathlib import Path
+# %%
+# 
+# from pathlib import Path
+
+import torch
 from embedding import create_g2v_embeddings, load_embeddings, histogram_embeddings
 from data_loader.syntheticData import SynthGraphons
 from utils import classification, clustering, update_config, download_datasets, load_graph, combine_datasets
@@ -7,7 +11,7 @@ import wandb
 import yaml
 import time
 import os
-
+import random 
 
 def clustering_classification(
     NUM_GRAPHS_PER_GRAPHON=100,
@@ -110,50 +114,82 @@ def clustering_classification(
                     'graphons_clustering_error': clustering_error,
                     'time_graphons': time_graphons})
 
-    
+
+def graphon_mixup(graphons, label, la=0.5, num_sample=20):
+
+    two_graphons = random.sample(graphons, 2)
+    # for label, graphon in two_graphons:
+    #     print( label, graphon )
+    # print(two_graphons[0][0])
+    new_graphon = la * two_graphons[0] + (1 - la) * two_graphons[1]
+
+    # print("new graphon:", new_graphon)
+
+    # print( label )
+    sample_graph_label = torch.from_numpy(label).type(torch.float32)
+    # print(new_graphon)
+
+    sample_graphs = []
+    for i in range(num_sample):
+
+        sample_graph = (np.random.rand(*new_graphon.shape) < new_graphon.numpy()).astype(np.int32)
+        sample_graph = np.triu(sample_graph)
+        sample_graph = sample_graph + sample_graph.T - np.diag(np.diag(sample_graph))
+
+        sample_graph = sample_graph[sample_graph.sum(axis=1) != 0]
+
+        sample_graph = sample_graph[:, sample_graph.sum(axis=0) != 0]
+
+        # print(sample_graph.shape)
+
+        # print(sample_graph)
+
+        A = torch.from_numpy(sample_graph)
+        # edge_index = A.to_sparse()
+        # print(edge_index)
+        # num_nodes = int(torch.max(edge_index.indices())) + 1
+
+        return A
+
+        # pyg_graph = Data()
+        # pyg_graph.y = sample_graph_label
+        # pyg_graph.edge_index = edge_index
+        # pyg_graph.num_nodes = num_nodes
+
+        # sample_graphs.append(pyg_graph)
+        # print(edge_index)
+    return sample_graphs
 
 def sweep(config=None):
     with wandb.init(config=config):
             clustering_classification(**wandb.config)
 
 
-if __name__ == '__main__':
-    # loads the config file
-    with open("config.yaml", 'r') as stream:
-        config_def = yaml.load(stream, Loader=yaml.FullLoader)
+# if __name__ == '__main__':
+#     # loads the config file
+#     with open("config.yaml", 'r') as stream:
+#         config_def = yaml.load(stream, Loader=yaml.FullLoader)
 
-    with open('sweep_config.yaml', 'r') as f:
-            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
-    final_config = update_config(sweep_configuration, config_def)
+#     with open('sweep_config.yaml', 'r') as f:
+#             sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
+#     final_config = update_config(sweep_configuration, config_def)
 
-    # if we are sweeping, we update the config with the default values and start the sweep
-    # else we run the code using the config_def values
-    if config_def['SWEEP']:
-        wandb.login()
-        sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')
-        wandb.agent(sweep_id, sweep)
-    else:
-        clustering_classification(**final_config)
+#     # if we are sweeping, we update the config with the default values and start the sweep
+#     # else we run the code using the config_def values
+#     if config_def['SWEEP']:
+#         wandb.login()
+#         sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')
+#         wandb.agent(sweep_id, sweep)
+#     else:
+#         clustering_classification(**final_config)
+
+# %%
+
+fb = load_graph(min_num_nodes=50, name='facebook_ct1')
+graphs, true_labels = combine_datasets([fb])
+graphs = graphs[:2]
+graphs_t = histogram_embeddings(graphs, n0=150)
+A = graphon_mixup(graphs_t, true_labels, la=0.5, num_sample=20)
 
 
-
-
-
-
-
-
-'''
-if DOWNLOAD_DATA:
-    download_datasets()
-# loading graphs
-print(DATASETS)
-fb = load_graph(min_num_nodes=100, name=DATASETS[0])
-github = load_graph(min_num_nodes=950, name=DATASETS[1])
-reddit = load_graph(min_num_nodes=3200, name=DATASETS[2])
-deezer = load_graph(min_num_nodes=200, name=DATASETS[3])
-fb_github_reddit, gt_fb_github_reddit = combine_datasets([fb, github, reddit])
-fb_github_deezer, gt_fb_github_deezer = combine_datasets([fb, github, deezer])
-fb_reddit_deezer, gt_fb_reddit_deezer = combine_datasets([fb, reddit, deezer])
-github_reddit_deezer, gt_github_reddit_deezer = combine_datasets([github, reddit, deezer])
-fb_github_reddit_deezer, gt_fb_github_reddit_deezer = combine_datasets([fb, github, reddit, deezer])
-'''
+# %%

@@ -290,7 +290,7 @@ class SynthGraphons:
         :param key: the key of the data_loader function
         :type key: int
 
-        :return: Nothing
+        :return: Noothing
         :rtype: None
         """
         x = torch.linspace(0, 1, 1000)
