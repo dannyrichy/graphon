@@ -1,5 +1,3 @@
-DOWNLOAD_DATA: False
-
 # directory to store the graph2vec embeddings
 G2V_EMBEDDING_DIR: 'graph2vec_embeddings/'
 
@@ -13,7 +11,10 @@ CREATE_EMBEDDINGS: True
 N0: 30
 
 # Dictionary of real-world datasets and synthetic datasets
-DATA: [['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'REDDIT-BINARY'], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
+DATA: [
+  ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'REDDIT-BINARY'], 
+  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+  ]
 
 # Number of graphs to create per graphon
 NUM_GRAPHS_PER_GRAPHON: 15
@@ -25,7 +26,11 @@ NUM_NODES: 150
 # OBS: if False it loads the graphons from the folder 
 SAVE_GRAPHONS: True
 
+# decide wheter we want to use synth data or real data
+SYNTH_DATA: True
+
 # Determines if we want to perform a sweep or not
-SWEEP: True
+SWEEP: False
 
-
+# ------------------ FOR REAL DATA  ------------------
+DOWNLOAD_DATA: False

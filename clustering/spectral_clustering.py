@@ -8,11 +8,10 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 
 from config import DEVICE
-from clustering.utils import error, generate_graph_laplacian, compute_spectrum_graph_laplacian
-import logging
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+from clustering.utils import error, generate_graph_laplacian, compute_spectrum_graph_laplacian
+
+
 
 def DSC(dist, no_clusters=2, no_eig_vecs=2):
     """
@@ -41,7 +40,6 @@ def DSC(dist, no_clusters=2, no_eig_vecs=2):
     idxs = eig_vals[:no_eig_vecs]
     eig_vecs = eig_vecs[:, idxs].cpu().detach().numpy()
 
-    logger.info("Performing kmeans clustering with %d clusters", no_clusters)
     kmeans = KMeans(n_clusters=no_clusters, random_state=0).fit(eig_vecs)
     return kmeans.labels_
 
@@ -59,7 +57,7 @@ def frobenius_norm(li_graph):
     dist = torch.zeros((no_graphs, no_graphs), dtype=torch.float64).to(device=DEVICE)
     for i in range(no_graphs):
         for j in range(i + 1):
-            dist[i][j] = torch.norm(li_graph[i].float() - li_graph[j].float())
+            dist[i][j] = torch.norm(torch.Tensor(li_graph[i] - li_graph[j]).to(device=DEVICE))
             dist[j][i] = dist[i][j]
     return dist
 
