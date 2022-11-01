@@ -1,6 +1,6 @@
 # %%
 # 
-# from pathlib import Path
+from pathlib import Path
 
 import torch
 from embedding import create_g2v_embeddings, load_embeddings, histogram_embeddings
@@ -23,10 +23,12 @@ def clustering_classification(
     DATA=None,
     SWEEP=False,
     DOWNLOAD_DATA=False,
+    AUGMENT_DATA=False,
     SYNTH_DATA=True
     
 ):
     if SYNTH_DATA:
+        assert NUM_NODES > N0, 'N0 must be smaller than NUM_NODES'
         NUM_GRAPHONS = len(DATA[1])
         k = NUM_GRAPHONS
         parent_dir = Path('graphons_dir')
@@ -40,14 +42,17 @@ def clustering_classification(
             syn_graphons.save_graphs(GRAPHONS_DIR)
         else:
             graphs, true_labels = SynthGraphons.load_graphs(path=GRAPHONS_DIR)
+        if AUGMENT_DATA:
+            print('Performing data augmentation')
+            graphs, true_labels = augment_dataset(graphs, true_labels, extra_graphs=10)
     else:
         if DOWNLOAD_DATA:
             download_datasets()
         # loading graphs
-        fb = load_graph(min_num_nodes=100, name=DATA[0][0])
-        github = load_graph(min_num_nodes=100, name=DATA[0][2])
-        reddit = load_graph(min_num_nodes=100, name=DATA[0][3])
-        deezer = load_graph(min_num_nodes=100, name=DATA[0][1])
+        fb = load_graph(min_num_nodes=N0, name=DATA[0][0])
+        github = load_graph(min_num_nodes=N0, name=DATA[0][2])
+        reddit = load_graph(min_num_nodes=N0, name=DATA[0][3])
+        deezer = load_graph(min_num_nodes=N0, name=DATA[0][1])
         # graphs, true_labels = combine_datasets([fb, github, reddit])
         # graphs, true_labels = combine_datasets([fb, github, deezer])
         # graphs, true_labels = combine_datasets([fb, reddit, deezer])
@@ -55,9 +60,11 @@ def clustering_classification(
         graphs, true_labels = combine_datasets([fb, github, reddit, deezer])
 
         k = len(np.unique(true_labels))
-    
+        if AUGMENT_DATA:
+            print('Performing data augmentation')
+            graphs, true_labels = augment_dataset(graphs, true_labels)
+
     # start recording time for embedding creation
-    
     start_t_g2v = time.time()
 
     # creating graph2vec embeddings of the graphs from graphons and storing them
@@ -66,7 +73,6 @@ def clustering_classification(
         create_g2v_embeddings(graph_list=graphs, true_labels=true_labels, dir_name=G2V_EMBEDDING_DIR)
     time_g2v = time.time() - start_t_g2v
     print(f'Graph2vec embeddings created in {time_g2v} seconds')
-    wandb.log({'time_g2v': time_g2v})
 
     
     # classification of graph2vec embeddings
@@ -115,81 +121,109 @@ def clustering_classification(
                     'time_graphons': time_graphons})
 
 
-def graphon_mixup(graphons, label, la=0.5, num_sample=20):
+def graphon_mixup(graphs, num_sample=20, n0=30):
+    """
+    Takes all the graphs of a specific class and generates new graphs by mixing them up.
 
-    two_graphons = random.sample(graphons, 2)
-    # for label, graphon in two_graphons:
-    #     print( label, graphon )
-    # print(two_graphons[0][0])
-    new_graphon = la * two_graphons[0] + (1 - la) * two_graphons[1]
+    :param graphons: list of graphs of a specific class
+    :type graphons: list
 
-    # print("new graphon:", new_graphon)
+    :param la: lambda parameter for the mixup weights
+    :type la: float
 
-    # print( label )
-    sample_graph_label = torch.from_numpy(label).type(torch.float32)
-    # print(new_graphon)
+    :param num_sample: number of samples to be generated
+    :type num_sample: int
 
-    sample_graphs = []
-    for i in range(num_sample):
+    :return: list of new graphs
+    :rtype: list
+    """
+    # two_graphs = random.sample(graphs, 2)
+    min_dim = min([g.shape[0] for g in graphs])
+    hist_approxs = histogram_embeddings(graphs, n0=min_dim)
 
+    new_graphon = sum(hist_approxs) / len(hist_approxs)
+
+    new_graphs = []
+
+    while len(new_graphs) < num_sample:
         sample_graph = (np.random.rand(*new_graphon.shape) < new_graphon.numpy()).astype(np.int32)
         sample_graph = np.triu(sample_graph)
         sample_graph = sample_graph + sample_graph.T - np.diag(np.diag(sample_graph))
-
         sample_graph = sample_graph[sample_graph.sum(axis=1) != 0]
-
         sample_graph = sample_graph[:, sample_graph.sum(axis=0) != 0]
+        if sample_graph.shape[0] > n0:
+            A = torch.from_numpy(sample_graph)
+            new_graphs.append(A)
+  
+    return new_graphs
 
-        # print(sample_graph.shape)
+def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30):
+    """
+    Augments the dataset by generating new graphs for each class.
 
-        # print(sample_graph)
+    :param graphs: array of graphs
+    :type graphs: ndarray
 
-        A = torch.from_numpy(sample_graph)
-        # edge_index = A.to_sparse()
-        # print(edge_index)
-        # num_nodes = int(torch.max(edge_index.indices())) + 1
+    :param true_labels: array of labels
+    :type true_labels: ndarray
 
-        return A
+    :return: augmented graphs and labels
+    :rtype: ndarray, ndarray
+    """
 
-        # pyg_graph = Data()
-        # pyg_graph.y = sample_graph_label
-        # pyg_graph.edge_index = edge_index
-        # pyg_graph.num_nodes = num_nodes
+    print(f'Initial number of graphs: {len(graphs)}')
+    number_of_graphs = {f'{i}': len([x for x in true_labels if x == i]) for i in set(true_labels)}
+    max_number_of_graphs = max(number_of_graphs.values())
 
-        # sample_graphs.append(pyg_graph)
-        # print(edge_index)
-    return sample_graphs
+    # select only graphs from a specific label
+    new_graphs = []
+    new_labels = []
+    for label in number_of_graphs.keys():
+        
+        i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
+
+        num_sample = max_number_of_graphs - number_of_graphs[label]
+        if num_sample != 0:
+            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0)
+            new_graphs.extend(sampled_graphs)
+            new_labels.extend([int(label)] * num_sample)
+
+    if extra_graphs is not None:
+        for label in number_of_graphs.keys():
+            i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
+            num_sample = extra_graphs
+            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0)
+            new_graphs.extend(sampled_graphs)
+            new_labels.extend([int(label)] * num_sample)
+
+    graphs = np.append(graphs, np.array(new_graphs))
+    true_labels = np.append(true_labels, np.array(new_labels))
+    print(f'Final number of graphs: {len(graphs)}')
+    return graphs.tolist(), true_labels.tolist()
+
 
 def sweep(config=None):
     with wandb.init(config=config):
             clustering_classification(**wandb.config)
 
 
-# if __name__ == '__main__':
-#     # loads the config file
-#     with open("config.yaml", 'r') as stream:
-#         config_def = yaml.load(stream, Loader=yaml.FullLoader)
+if __name__ == '__main__':
+    # loads the config file
+    with open("config.yaml", 'r') as stream:
+        config_def = yaml.load(stream, Loader=yaml.FullLoader)
 
-#     with open('sweep_config.yaml', 'r') as f:
-#             sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
-#     final_config = update_config(sweep_configuration, config_def)
+    with open('sweep_config.yaml', 'r') as f:
+            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
+    final_config = update_config(sweep_configuration, config_def)
 
-#     # if we are sweeping, we update the config with the default values and start the sweep
-#     # else we run the code using the config_def values
-#     if config_def['SWEEP']:
-#         wandb.login()
-#         sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')
-#         wandb.agent(sweep_id, sweep)
-#     else:
-#         clustering_classification(**final_config)
-
-# %%
-
-fb = load_graph(min_num_nodes=50, name='facebook_ct1')
-graphs, true_labels = combine_datasets([fb])
-graphs = graphs[:2]
-graphs_t = histogram_embeddings(graphs, n0=150)
-A = graphon_mixup(graphs_t, true_labels, la=0.5, num_sample=20)
+    # if we are sweeping, we update the config with the default values and start the sweep
+    # else we run the code using the config_def values
+    if config_def['SWEEP']:
+        wandb.login()
+        sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')
+        wandb.agent(sweep_id, sweep)
+    else:
+        clustering_classification(**final_config)
 
 
 # %%

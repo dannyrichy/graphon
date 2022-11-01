@@ -80,8 +80,8 @@ def load_graph(min_num_nodes=10, name='ENZYMES'):
     # nx_graphs = []
     max_nodes = 0
     all_nodes = []
-    # for i in range(graph_num):
-    for i in range(200):
+    for i in range(graph_num):
+    # for i in range(200):
         # find the nodes for each graph
         nodes = node_list[data_graph_indicator == i + 1]
         G_sub = G.subgraph(nodes)

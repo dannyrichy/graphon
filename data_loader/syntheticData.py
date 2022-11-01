@@ -256,8 +256,8 @@ class SynthGraphons:
             self.graphs = self.graphs + g
 
         for i in range(len(self.graphons_keys)):
-            _label = i * np.ones(self.num_graphs)
-            self.labels = self.labels + _label.tolist()
+            _label = int(i) * np.ones(self.num_graphs)
+            self.labels = self.labels + _label.astype(int).tolist()
 
         return self.graphs, self.labels
 

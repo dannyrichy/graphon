@@ -20,7 +20,6 @@ def histogram_embeddings(graphs, n0=30):
     :return: Approximate list of graphs
     :rtype: list
     """
-    print('creating histogram estimate')
     graphs_approx = []
     for graph in tqdm(graphs):
         nn = graph.shape[0]
