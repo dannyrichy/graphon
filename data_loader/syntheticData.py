@@ -232,7 +232,7 @@ class SynthGraphons:
 
         return graph_gen
 
-    def data_simulation(self, start=100, stop=1000):
+    def data_simulation(self, start=100, stop=600):
         """
         Simulate data_loader for the data_loader model
 

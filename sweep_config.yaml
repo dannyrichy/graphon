@@ -1,27 +1,35 @@
 # Define sweep config
 
 method: grid
-name: clustering_exp
+name: data_augmentation_synth_data
 parameters: 
     NUM_GRAPHS_PER_GRAPHON: 
         values: 
-            - 30
+            - 25
             - 50
-            - 100
     NUM_NODES: 
         values: 
             - 'None'
             - 100 
             - 250
+    USE_INTERPOLATION:
+        values:
+            - True
+            - False
     DATA:  
         values:
             - [[], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
             - [[], ['1', '2', '3', '4', '5']]
-    N0:
+    # N0:
+    #     values:
+    #         - 20
+    #         - 30
+    #         - 50
+    AUGMENT_DATA:
         values:
-            - 20
-            - 30
-            - 50
+            - True 
+            - False
+
      
 
 

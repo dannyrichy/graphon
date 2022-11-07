@@ -17,20 +17,27 @@ DATA: [
   ]
 
 # Number of graphs to create per graphon
-NUM_GRAPHS_PER_GRAPHON: 15
+NUM_GRAPHS_PER_GRAPHON: 20
 
 # Number of nodes in each synthetic graph (None to make the number of nodes random for each graph)
-NUM_NODES: 150
+NUM_NODES: 50
 
 # Flag to store the graphs generated from graphons
 # OBS: if False it loads the graphons from the folder 
 SAVE_GRAPHONS: True
 
 # decide wheter we want to use synth data or real data
-SYNTH_DATA: False
+SYNTH_DATA: True
+
+USE_INTERPOLATION: True
+
+USE_AVG_NODES: True
+# ------------------ FOR SWEEP ------------------
 
 # Determines if we want to perform a sweep or not
-SWEEP: False
+SWEEP: True
 
 # ------------------ FOR REAL DATA  ------------------
 DOWNLOAD_DATA: False
+
+AUGMENT_DATA: True

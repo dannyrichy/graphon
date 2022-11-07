@@ -1,7 +1,6 @@
 # %%
 # 
 from pathlib import Path
-
 import torch
 from embedding import create_g2v_embeddings, load_embeddings, histogram_embeddings
 from data_loader.syntheticData import SynthGraphons
@@ -10,8 +9,7 @@ import numpy as np
 import wandb
 import yaml
 import time
-import os
-import random 
+import cv2 as cv
 
 def clustering_classification(
     NUM_GRAPHS_PER_GRAPHON=100,
@@ -24,27 +22,29 @@ def clustering_classification(
     SWEEP=False,
     DOWNLOAD_DATA=False,
     AUGMENT_DATA=False,
-    SYNTH_DATA=True
+    SYNTH_DATA=True,
+    USE_INTERPOLATION=False,
+    USE_AVG_NODES=False,
     
 ):
     if SYNTH_DATA:
-        assert NUM_NODES > N0, 'N0 must be smaller than NUM_NODES'
         NUM_GRAPHONS = len(DATA[1])
         k = NUM_GRAPHONS
         parent_dir = Path('graphons_dir')
         parent_dir.mkdir(exist_ok=True, parents=True)
         GRAPHONS_DIR = parent_dir.joinpath(f'{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHON}_graphs.pkl')
-
+        # to remove after we do Data Augmentation experiments
+        if not AUGMENT_DATA:
+            NUM_GRAPHS_PER_GRAPHON = NUM_GRAPHS_PER_GRAPHON * 2
         # synthetic data_loader
         if SAVE_GRAPHONS:
             syn_graphons = SynthGraphons(NUM_NODES, NUM_GRAPHS_PER_GRAPHON, DATA[1])
-            graphs, true_labels = syn_graphons.data_simulation(start=100, stop=1000)
+            graphs, true_labels = syn_graphons.data_simulation(start=100, stop=500)
             syn_graphons.save_graphs(GRAPHONS_DIR)
         else:
             graphs, true_labels = SynthGraphons.load_graphs(path=GRAPHONS_DIR)
         if AUGMENT_DATA:
-            print('Performing data augmentation')
-            graphs, true_labels = augment_dataset(graphs, true_labels, extra_graphs=10)
+            graphs, true_labels = augment_dataset(graphs, true_labels, extra_graphs=int(NUM_GRAPHS_PER_GRAPHON / 2), use_interpolation=USE_INTERPOLATION, use_avg_nodes=USE_AVG_NODES)
     else:
         if DOWNLOAD_DATA:
             download_datasets()
@@ -121,7 +121,7 @@ def clustering_classification(
                     'time_graphons': time_graphons})
 
 
-def graphon_mixup(graphs, num_sample=20, n0=30):
+def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg_nodes=False):
     """
     Takes all the graphs of a specific class and generates new graphs by mixing them up.
 
@@ -138,26 +138,40 @@ def graphon_mixup(graphs, num_sample=20, n0=30):
     :rtype: list
     """
     # two_graphs = random.sample(graphs, 2)
-    min_dim = min([g.shape[0] for g in graphs])
-    hist_approxs = histogram_embeddings(graphs, n0=min_dim)
 
+    if use_interpolation:
+        emb_size = n0
+    elif use_avg_nodes:
+        emb_size = int(np.mean([g.shape[0] for g in graphs]))
+    else:
+        emb_size = min([g.shape[0] for g in graphs])
+    
+    graphs = [g for g in graphs if g.shape[0] >= emb_size]
+
+    hist_approxs = histogram_embeddings(graphs, n0=emb_size)
     new_graphon = sum(hist_approxs) / len(hist_approxs)
+    new_graphon = new_graphon.numpy()
+
+    if use_interpolation:
+        new_dim = int(np.mean([g.shape[0] for g in graphs]))
+        new_graphon = cv.resize(new_graphon, (new_dim, new_dim), interpolation=cv.INTER_LINEAR)
+        
 
     new_graphs = []
 
     while len(new_graphs) < num_sample:
-        sample_graph = (np.random.rand(*new_graphon.shape) < new_graphon.numpy()).astype(np.int32)
+        sample_graph = (np.random.rand(*new_graphon.shape) < new_graphon).astype(np.int32)
         sample_graph = np.triu(sample_graph)
         sample_graph = sample_graph + sample_graph.T - np.diag(np.diag(sample_graph))
         sample_graph = sample_graph[sample_graph.sum(axis=1) != 0]
         sample_graph = sample_graph[:, sample_graph.sum(axis=0) != 0]
+
         if sample_graph.shape[0] > n0:
             A = torch.from_numpy(sample_graph)
             new_graphs.append(A)
-  
     return new_graphs
 
-def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30):
+def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30, use_interpolation=True, use_avg_nodes=False):
     """
     Augments the dataset by generating new graphs for each class.
 
@@ -171,7 +185,6 @@ def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30):
     :rtype: ndarray, ndarray
     """
 
-    print(f'Initial number of graphs: {len(graphs)}')
     number_of_graphs = {f'{i}': len([x for x in true_labels if x == i]) for i in set(true_labels)}
     max_number_of_graphs = max(number_of_graphs.values())
 
@@ -181,10 +194,9 @@ def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30):
     for label in number_of_graphs.keys():
         
         i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
-
         num_sample = max_number_of_graphs - number_of_graphs[label]
         if num_sample != 0:
-            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0)
+            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
             new_graphs.extend(sampled_graphs)
             new_labels.extend([int(label)] * num_sample)
 
@@ -192,13 +204,12 @@ def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30):
         for label in number_of_graphs.keys():
             i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
             num_sample = extra_graphs
-            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0)
+            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
             new_graphs.extend(sampled_graphs)
             new_labels.extend([int(label)] * num_sample)
 
     graphs = np.append(graphs, np.array(new_graphs))
     true_labels = np.append(true_labels, np.array(new_labels))
-    print(f'Final number of graphs: {len(graphs)}')
     return graphs.tolist(), true_labels.tolist()
 
 
