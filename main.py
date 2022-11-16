@@ -10,6 +10,7 @@ import wandb
 import yaml
 import time
 import cv2 as cv
+import random
 
 def clustering_classification(
     NUM_GRAPHS_PER_GRAPHON=100,
@@ -25,6 +26,8 @@ def clustering_classification(
     SYNTH_DATA=True,
     USE_INTERPOLATION=False,
     USE_AVG_NODES=False,
+    NUMBER_OF_CLUSTERS=10,
+    NUMBER_OF_EIGENVECTORS=2,
     
 ):
     if SYNTH_DATA:
@@ -62,7 +65,7 @@ def clustering_classification(
         k = len(np.unique(true_labels))
         if AUGMENT_DATA:
             print('Performing data augmentation')
-            graphs, true_labels = augment_dataset(graphs, true_labels)
+            graphs, true_labels = augment_dataset(graphs, true_labels, 3000)
 
     # start recording time for embedding creation
     start_t_g2v = time.time()
@@ -74,7 +77,6 @@ def clustering_classification(
     time_g2v = time.time() - start_t_g2v
     print(f'Graph2vec embeddings created in {time_g2v} seconds')
 
-    
     # classification of graph2vec embeddings
     embeddings, true_labels = load_embeddings(dir_name=G2V_EMBEDDING_DIR)
     embeddings = np.squeeze(embeddings)
@@ -84,7 +86,7 @@ def clustering_classification(
     classification_train_acc, classification_test_acc = classification(embeddings, true_labels, GRAPH2VEC=True)
 
     print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=k, GRAPH2VEC=True)
+    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=True, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
 
     if SWEEP:
         wandb.log({
@@ -110,7 +112,7 @@ def clustering_classification(
     classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
 
     print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=k, GRAPH2VEC=False)
+    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=False, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
 
     if SWEEP:
         wandb.log({
@@ -152,11 +154,18 @@ def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg
     new_graphon = sum(hist_approxs) / len(hist_approxs)
     new_graphon = new_graphon.numpy()
 
+    u,s,v = np.linalg.svd(new_graphon)
+    singular_threshold = 0.02 * (30 ** 0.5)
+    binary_s = s < singular_threshold
+    s[binary_s] = 0
+    new_graphon = u @ np.diag(s) @ v.T
+    new_graphon[new_graphon > 1] = 1
+    new_graphon[new_graphon < 0] = 0
+
     if use_interpolation:
         new_dim = int(np.mean([g.shape[0] for g in graphs]))
         new_graphon = cv.resize(new_graphon, (new_dim, new_dim), interpolation=cv.INTER_LINEAR)
         
-
     new_graphs = []
 
     while len(new_graphs) < num_sample:
@@ -171,7 +180,7 @@ def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg
             new_graphs.append(A)
     return new_graphs
 
-def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30, use_interpolation=True, use_avg_nodes=False):
+def augment_dataset(graphs, true_labels, graphs_per_class=0, extra_graphs=None, n0=30, use_interpolation=True, use_avg_nodes=False):
     """
     Augments the dataset by generating new graphs for each class.
 
@@ -186,19 +195,23 @@ def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30, use_interpola
     """
 
     number_of_graphs = {f'{i}': len([x for x in true_labels if x == i]) for i in set(true_labels)}
-    max_number_of_graphs = max(number_of_graphs.values())
+    # max_number_of_graphs = max(number_of_graphs.values())
 
     # select only graphs from a specific label
     new_graphs = []
     new_labels = []
-    for label in number_of_graphs.keys():
-        
-        i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
-        num_sample = max_number_of_graphs - number_of_graphs[label]
-        if num_sample != 0:
-            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
-            new_graphs.extend(sampled_graphs)
-            new_labels.extend([int(label)] * num_sample)
+    if graphs_per_class != 0:
+        for label in number_of_graphs.keys():
+            i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
+            num_sample = graphs_per_class - number_of_graphs[label]
+            if num_sample > 0:
+                sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
+                new_graphs.extend(sampled_graphs)
+                new_labels.extend([int(label)] * num_sample)
+            elif num_sample < 0:
+                sampled_graphs = random.sample(i_graphs, abs(graphs_per_class))
+                new_graphs.extend(sampled_graphs)
+                new_labels.extend([int(label)] * abs(graphs_per_class))
 
     if extra_graphs is not None:
         for label in number_of_graphs.keys():
@@ -207,9 +220,11 @@ def augment_dataset(graphs, true_labels, extra_graphs=None, n0=30, use_interpola
             sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
             new_graphs.extend(sampled_graphs)
             new_labels.extend([int(label)] * num_sample)
+    print(len(new_graphs))
 
     graphs = np.append(graphs, np.array(new_graphs))
     true_labels = np.append(true_labels, np.array(new_labels))
+    print(f'Augmented dataset now has {len(graphs)} graphs')
     return graphs.tolist(), true_labels.tolist()
 
 
@@ -235,6 +250,11 @@ if __name__ == '__main__':
         wandb.agent(sweep_id, sweep)
     else:
         clustering_classification(**final_config)
+
+
+
+
+
 
 
 # %%

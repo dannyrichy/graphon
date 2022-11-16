@@ -90,7 +90,7 @@ def spectral_clustering(affinity_mat, num_clusters=3):
     return labels
 
 
-def graphon_clustering(graphs, true_labels, num_clusters=3):
+def graphon_clustering(graphs, true_labels, num_clusters=3, no_eig_vecs=2):
     """
     Perform data_loader clustering and returns the error scores.
 
@@ -114,6 +114,6 @@ def graphon_clustering(graphs, true_labels, num_clusters=3):
     dist = frobenius_norm(graphs)
 
     # Get label name for each graph
-    labels = DSC(dist, no_clusters=num_clusters)
+    labels = DSC(dist, no_clusters=num_clusters, no_eig_vecs=no_eig_vecs)
 
     return adjusted_rand_score(true_labels, labels), error(true_labels, labels)

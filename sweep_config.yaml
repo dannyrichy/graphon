@@ -1,34 +1,46 @@
 # Define sweep config
 
 method: grid
-name: data_augmentation_synth_data
+name: class_clust_synth_spectral
 parameters: 
-    NUM_GRAPHS_PER_GRAPHON: 
-        values: 
-            - 25
-            - 50
+    # NUM_GRAPHS_PER_GRAPHON: 
+    #     values: 
+    #         # - 25
+    #         - 50
     NUM_NODES: 
         values: 
             - 'None'
             - 100 
-            - 250
-    USE_INTERPOLATION:
-        values:
-            - True
-            - False
+            # - 250
+    # USE_INTERPOLATION:
+    #     values:
+    #         - True
+    #         - False
     DATA:  
         values:
             - [[], ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']]
             - [[], ['1', '2', '3', '4', '5']]
     # N0:
     #     values:
-    #         - 20
+    #         # - 20
     #         - 30
-    #         - 50
-    AUGMENT_DATA:
+            # - 50
+    # AUGMENT_DATA:
+    #     values:
+    #         - True 
+    #         - False
+    NUMBER_OF_CLUSTERS:
         values:
-            - True 
-            - False
+            - 4
+            - 5
+            - 6
+            - 10
+            - 11
+            - 12
+    NUMBER_OF_EIGENVECTORS:
+        values:
+            - 2
+            - 4
 
      
 
