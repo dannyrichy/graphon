@@ -136,13 +136,13 @@ def classification(embeddings, true_labels, GRAPH2VEC=False):
 
 
 
-def clustering(graphs, true_labels, k=2, GRAPH2VEC=False, n_eigenvectors=2):
+def clustering(graphs, true_labels, k, GRAPH2VEC=False, n_eigenvectors=2):
     if GRAPH2VEC:
-        adjusted_rand_score, error = graph2vec_clustering(li_emb=graphs, true_labels=true_labels, k=k, no_eig_vecs=n_eigenvectors)  
+        adjusted_rand_score, hungarian_error = graph2vec_clustering(li_emb=graphs, true_labels=true_labels, k=k, no_eig_vecs=n_eigenvectors)  
     else: 
-        adjusted_rand_score, error = graphon_clustering(graphs, true_labels, num_clusters=k, no_eig_vecs=n_eigenvectors)
-    print(f"\nAdjusted Random Score --> {adjusted_rand_score}\nHungarian Score --> {error} \nusing {'Graph2Vec' if GRAPH2VEC else 'Graphons'}\n")
-    return adjusted_rand_score, error
+        adjusted_rand_score, hungarian_error = graphon_clustering(graphs, true_labels, num_clusters=k, no_eig_vecs=n_eigenvectors)
+    print(f"\nAdjusted Random Score --> {adjusted_rand_score}\nHungarian Score --> {hungarian_error} \nusing {'Graph2Vec' if GRAPH2VEC else 'Graphons'}\n")
+    return adjusted_rand_score, hungarian_error
 
 
 def update_config(sweep_config, config_def):

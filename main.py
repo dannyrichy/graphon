@@ -109,14 +109,14 @@ def clustering_classification(
     print(f'Graphon embeddings created in {time_graphons} seconds')
 
     print('\nPerforming classification on histogram approximation')
-    classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
+    # classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
 
     print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=False, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
+    clustering_rand_score, clustering_error = clustering(hist_embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=False, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
 
     if SWEEP:
         wandb.log({
-            'graphons_class_train_accuracy': classification_train_acc, 
+                    'graphons_class_train_accuracy': classification_train_acc, 
                     'graphons_class_test_accuracy': classification_test_acc,
                     'graphons_clustering_rand_score': clustering_rand_score,
                     'graphons_clustering_error': clustering_error,

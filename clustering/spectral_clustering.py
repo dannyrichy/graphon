@@ -9,38 +9,18 @@ from sklearn.metrics import adjusted_rand_score
 
 from config import DEVICE
 
-from clustering.utils import error, generate_graph_laplacian, compute_spectrum_graph_laplacian
-
-
+from clustering.utils import hungarian_error, generate_graph_laplacian, compute_spectrum_graph_laplacian
+import warnings
+warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
 def DSC(dist, no_clusters=2, no_eig_vecs=2):
-    """
-    Performs the Distance Based Spectral Clustering 
-    on the distance matrix as defined in the paper 
-
-    :param dist: Distance matrix
-    :type dist: torch.Tensor
-
-    :param no_clusters: Number of clusters
-    :type no_clusters: int
-
-    :param no_eig_vecs: Number of eigenvectors to use
-    :type no_eig_vecs: int
-
-    :return: Labels
-    :rtype: torch.Tensor
-    """
-    # eigenvalues and eigenvectors decomposition of symmetric matrix
-    eig_vals, eig_vecs = torch.linalg.eigh(dist)
-
-    # Sorting eigvalues in ascending order
-    eig_vals = torch.argsort(torch.abs(eig_vals))
-    
-    # Selecting the first no_eig_vecs eigenvectors
-    idxs = eig_vals[:no_eig_vecs]
-    eig_vecs = eig_vecs[:, idxs].cpu().detach().numpy()
-
-    kmeans = KMeans(n_clusters=no_clusters, random_state=0).fit(eig_vecs)
+    w,v = torch.eig(dist,eigenvectors=True)
+    w_real = w[:,0] #symmetric matrix so no need to bother about the complex part
+    sorted_w = torch.argsort(-torch.abs(w_real))
+    to_pick_idx = sorted_w[:no_clusters]
+    eig_vec = v[:,to_pick_idx]
+    eig_vec = eig_vec.cpu().detach().numpy()
+    kmeans = KMeans(n_clusters=no_clusters, random_state=0).fit(eig_vec)
     return kmeans.labels_
 
 
@@ -54,11 +34,13 @@ def frobenius_norm(li_graph):
     :rtype: torch.Tensor
     """
     no_graphs = len(li_graph)
-    dist = torch.zeros((no_graphs, no_graphs), dtype=torch.float64).to(device=DEVICE)
+    dist = torch.zeros((no_graphs, no_graphs), dtype=torch.double).to(device=DEVICE)
+    n0 = li_graph[0].shape[0]
     for i in range(no_graphs):
         for j in range(i + 1):
-            dist[i][j] = torch.norm(torch.Tensor(li_graph[i] - li_graph[j]).to(device=DEVICE))
-            dist[j][i] = dist[i][j]
+            d = torch.norm(li_graph[i] - li_graph[j], p='fro') / n0
+            dist[i][j] = d
+            dist[j][i] = d
     return dist
 
 
@@ -90,7 +72,7 @@ def spectral_clustering(affinity_mat, num_clusters=3):
     return labels
 
 
-def graphon_clustering(graphs, true_labels, num_clusters=3, no_eig_vecs=2):
+def graphon_clustering(graphs, true_labels, num_clusters, no_eig_vecs=2):
     """
     Perform data_loader clustering and returns the error scores.
 
@@ -116,4 +98,4 @@ def graphon_clustering(graphs, true_labels, num_clusters=3, no_eig_vecs=2):
     # Get label name for each graph
     labels = DSC(dist, no_clusters=num_clusters, no_eig_vecs=no_eig_vecs)
 
-    return adjusted_rand_score(true_labels, labels), error(true_labels, labels)
+    return adjusted_rand_score(true_labels, list(labels)), hungarian_error(true_labels, list(labels))  # type: ignore

@@ -13,14 +13,15 @@ N0: 30
 # Dictionary of real-world datasets and synthetic datasets
 DATA: [
   ['facebook_ct1', 'deezer_ego_nets', 'github_stargazers', 'REDDIT-BINARY'], 
-  ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+  # ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+  ['1', '2', '3', '4', '5']
   ]
 
 # Number of graphs to create per graphon
 NUM_GRAPHS_PER_GRAPHON: 50
 
 # Number of nodes in each synthetic graph (None to make the number of nodes random for each graph)
-NUM_NODES: 50
+NUM_NODES: 100
 
 # Flag to store the graphs generated from graphons
 # OBS: if False it loads the graphons from the folder 
@@ -33,13 +34,13 @@ USE_INTERPOLATION: False
 
 USE_AVG_NODES: True
 
-NUMBER_OF_CLUSTERS: 10
+NUMBER_OF_CLUSTERS: 5
 
-NUMBER_OF_EIGENVECTORS: 2
+NUMBER_OF_EIGENVECTORS: 5
 # ------------------ FOR SWEEP ------------------
 
 # Determines if we want to perform a sweep or not
-SWEEP: True
+SWEEP: False
 
 # ------------------ FOR REAL DATA  ------------------
 DOWNLOAD_DATA: False

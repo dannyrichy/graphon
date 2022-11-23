@@ -5,7 +5,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
 from sklearn.cluster import SpectralClustering
 
-from clustering.utils import error
+from clustering.utils import hungarian_error
 
 
 def graph2vec_clustering(li_emb, true_labels, k, no_eig_vecs=2):
@@ -32,6 +32,6 @@ def graph2vec_clustering(li_emb, true_labels, k, no_eig_vecs=2):
     labels = SC.labels_
 
     rand_idx_g2v = adjusted_rand_score(true_labels, labels)
-    frac_err_g2v = error(true_labels, labels)
+    frac_err_g2v = hungarian_error(true_labels, labels)
 
-    return frac_err_g2v, rand_idx_g2v
+    return rand_idx_g2v, frac_err_g2v
