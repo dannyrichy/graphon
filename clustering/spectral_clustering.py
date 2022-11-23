@@ -13,35 +13,35 @@ from clustering.utils import hungarian_error, generate_graph_laplacian, compute_
 
 
 
-def DSC(dist, no_clusters=2, no_eig_vecs=2):
-    """
-    Performs the Distance Based Spectral Clustering 
-    on the distance matrix as defined in the paper 
+# def DSC(dist, no_clusters=2, no_eig_vecs=2):
+#     """
+#     Performs the Distance Based Spectral Clustering 
+#     on the distance matrix as defined in the paper 
 
-    :param dist: Distance matrix
-    :type dist: torch.Tensor
+#     :param dist: Distance matrix
+#     :type dist: torch.Tensor
 
-    :param no_clusters: Number of clusters
-    :type no_clusters: int
+#     :param no_clusters: Number of clusters
+#     :type no_clusters: int
 
-    :param no_eig_vecs: Number of eigenvectors to use
-    :type no_eig_vecs: int
+#     :param no_eig_vecs: Number of eigenvectors to use
+#     :type no_eig_vecs: int
 
-    :return: Labels
-    :rtype: torch.Tensor
-    """
-    # eigenvalues and eigenvectors decomposition of symmetric matrix
-    eig_vals, eig_vecs = torch.linalg.eigh(dist)
+#     :return: Labels
+#     :rtype: torch.Tensor
+#     """
+#     # eigenvalues and eigenvectors decomposition of symmetric matrix
+#     eig_vals, eig_vecs = torch.linalg.eigh(dist)
 
-    # Sorting the abs of the eigvalues in ascending order
-    eig_vals = torch.argsort(torch.abs(eig_vals))
+#     # Sorting the abs of the eigvalues in ascending order
+#     eig_vals = torch.argsort(torch.abs(eig_vals))
     
-    # Selecting the first no_eig_vecs eigenvectors
-    idxs = eig_vals[:no_eig_vecs]
-    eig_vecs = eig_vecs[:, idxs].numpy()
+#     # Selecting the first no_eig_vecs eigenvectors
+#     idxs = eig_vals[:no_eig_vecs]
+#     eig_vecs = eig_vecs[:, idxs].numpy()
 
-    kmeans = KMeans(n_clusters=no_clusters, random_state=0).fit(eig_vecs)
-    return kmeans.labels_
+#     kmeans = KMeans(n_clusters=no_clusters, random_state=0).fit(eig_vecs)
+#     return kmeans.labels_
 
 def DSC(dist, no_clusters=2, no_eig_vecs=2):
     w,v = torch.eig(dist,eigenvectors=True)
