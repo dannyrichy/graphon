@@ -28,15 +28,15 @@ NUM_NODES: 100
 SAVE_GRAPHONS: True
 
 # decide wheter we want to use synth data or real data
-SYNTH_DATA: False
+SYNTH_DATA: True
 
 USE_INTERPOLATION: False
 
 USE_AVG_NODES: True
 
-NUMBER_OF_CLUSTERS: 4
+NUMBER_OF_CLUSTERS: 10
 
-NUMBER_OF_EIGENVECTORS: 4
+NUMBER_OF_EIGENVECTORS: 10
 # ------------------ FOR SWEEP ------------------
 
 # Determines if we want to perform a sweep or not
@@ -45,4 +45,4 @@ SWEEP: True
 # ------------------ FOR REAL DATA  ------------------
 DOWNLOAD_DATA: False
 
-AUGMENT_DATA: True
+AUGMENT_DATA: False
