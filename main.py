@@ -30,12 +30,16 @@ def clustering_classification(
     NUMBER_OF_EIGENVECTORS=2,
     
 ):
+    N = 70
     if SYNTH_DATA:
         NUM_GRAPHONS = len(DATA[1])
         k = NUM_GRAPHONS
         parent_dir = Path('graphons_dir')
         parent_dir.mkdir(exist_ok=True, parents=True)
         GRAPHONS_DIR = parent_dir.joinpath(f'{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHON}_graphs.pkl')
+
+        
+
         # to remove after we do Data Augmentation experiments
         if not AUGMENT_DATA:
             NUM_GRAPHS_PER_GRAPHON = NUM_GRAPHS_PER_GRAPHON * 2
@@ -52,14 +56,12 @@ def clustering_classification(
         if DOWNLOAD_DATA:
             download_datasets()
         # loading graphs
-        fb = load_graph(min_num_nodes=N0, name=DATA[0][0])
-        github = load_graph(min_num_nodes=N0, name=DATA[0][2])
-        reddit = load_graph(min_num_nodes=N0, name=DATA[0][3])
-        deezer = load_graph(min_num_nodes=N0, name=DATA[0][1])
-        # graphs, true_labels = combine_datasets([fb, github, reddit])
-        # graphs, true_labels = combine_datasets([fb, github, deezer])
-        # graphs, true_labels = combine_datasets([fb, reddit, deezer])
-        # graphs, true_labels = combine_datasets([github, reddit, deezer])
+        fb = load_graph(min_num_nodes=N, name=DATA[0][0])
+        github = load_graph(min_num_nodes=N, name=DATA[0][2])
+        reddit = load_graph(min_num_nodes=N, name=DATA[0][3])
+        deezer = load_graph(min_num_nodes=N, name=DATA[0][1])
+        
+        
         graphs, true_labels = combine_datasets([fb, github, reddit, deezer])
 
         k = len(np.unique(true_labels))
@@ -109,7 +111,7 @@ def clustering_classification(
     print(f'Graphon embeddings created in {time_graphons} seconds')
 
     print('\nPerforming classification on histogram approximation')
-    # classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
+    classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
 
     print('performing clustering on histogram approximation')
     clustering_rand_score, clustering_error = clustering(hist_embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=False, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
