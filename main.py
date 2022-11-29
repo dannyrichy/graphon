@@ -47,6 +47,8 @@ def clustering_classification(
         if SAVE_GRAPHONS:
             syn_graphons = SynthGraphons(NUM_NODES, NUM_GRAPHS_PER_GRAPHON, DATA[1])
             graphs, true_labels = syn_graphons.data_simulation(start=100, stop=500)
+            graphs = graphs[:20] + graphs[50:]
+            true_labels = true_labels[:20] + true_labels[50:]
             syn_graphons.save_graphs(GRAPHONS_DIR)
         else:
             graphs, true_labels = SynthGraphons.load_graphs(path=GRAPHONS_DIR)
