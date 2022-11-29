@@ -1,16 +1,26 @@
 # %%
-# 
+#
+import random
+import time
 from pathlib import Path
-import torch
-from embedding import create_g2v_embeddings, load_embeddings, histogram_embeddings
-from data_loader.syntheticData import SynthGraphons
-from utils import classification, clustering, update_config, download_datasets, load_graph, combine_datasets
+
+import cv2 as cv
 import numpy as np
+import torch
 import wandb
 import yaml
-import time
-import cv2 as cv
-import random
+
+from data_loader.syntheticData import SynthGraphons
+from embedding import create_g2v_embeddings, histogram_embeddings, load_embeddings
+from utils import (
+    classification,
+    clustering,
+    combine_datasets,
+    download_datasets,
+    load_graph,
+    update_config,
+)
+
 
 def clustering_classification(
     NUM_GRAPHS_PER_GRAPHON=100,
@@ -28,17 +38,16 @@ def clustering_classification(
     USE_AVG_NODES=False,
     NUMBER_OF_CLUSTERS=10,
     NUMBER_OF_EIGENVECTORS=2,
-    
 ):
     N = 70
     if SYNTH_DATA:
         NUM_GRAPHONS = len(DATA[1])
         k = NUM_GRAPHONS
-        parent_dir = Path('graphons_dir')
+        parent_dir = Path("graphons_dir")
         parent_dir.mkdir(exist_ok=True, parents=True)
-        GRAPHONS_DIR = parent_dir.joinpath(f'{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHON}_graphs.pkl')
-
-        
+        GRAPHONS_DIR = parent_dir.joinpath(
+            f"{NUM_GRAPHONS}_graphons_{NUM_GRAPHS_PER_GRAPHON}_graphs.pkl"
+        )
 
         # to remove after we do Data Augmentation experiments
         if not AUGMENT_DATA:
@@ -47,11 +56,19 @@ def clustering_classification(
         if SAVE_GRAPHONS:
             syn_graphons = SynthGraphons(NUM_NODES, NUM_GRAPHS_PER_GRAPHON, DATA[1])
             graphs, true_labels = syn_graphons.data_simulation(start=100, stop=500)
+            graphs = graphs[:20] + graphs[50:]
+            true_labels = true_labels[:20] + true_labels[50:]
             syn_graphons.save_graphs(GRAPHONS_DIR)
         else:
             graphs, true_labels = SynthGraphons.load_graphs(path=GRAPHONS_DIR)
         if AUGMENT_DATA:
-            graphs, true_labels = augment_dataset(graphs, true_labels, extra_graphs=int(NUM_GRAPHS_PER_GRAPHON / 2), use_interpolation=USE_INTERPOLATION, use_avg_nodes=USE_AVG_NODES)
+            graphs, true_labels = augment_dataset(
+                graphs,
+                true_labels,
+                extra_graphs=int(NUM_GRAPHS_PER_GRAPHON / 2),
+                use_interpolation=USE_INTERPOLATION,
+                use_avg_nodes=USE_AVG_NODES,
+            )
     else:
         if DOWNLOAD_DATA:
             download_datasets()
@@ -60,13 +77,12 @@ def clustering_classification(
         github = load_graph(min_num_nodes=N, name=DATA[0][2])
         reddit = load_graph(min_num_nodes=N, name=DATA[0][3])
         deezer = load_graph(min_num_nodes=N, name=DATA[0][1])
-        
-        
+
         graphs, true_labels = combine_datasets([fb, github, reddit, deezer])
 
         k = len(np.unique(true_labels))
         if AUGMENT_DATA:
-            print('Performing data augmentation')
+            print("Performing data augmentation")
             graphs, true_labels = augment_dataset(graphs, true_labels, 3000)
 
     # start recording time for embedding creation
@@ -74,58 +90,83 @@ def clustering_classification(
 
     # creating graph2vec embeddings of the graphs from graphons and storing them
     if CREATE_EMBEDDINGS:
-        print('\nCreating graph2vec embeddings')
-        create_g2v_embeddings(graph_list=graphs, true_labels=true_labels, dir_name=G2V_EMBEDDING_DIR)
+        print("\nCreating graph2vec embeddings")
+        create_g2v_embeddings(
+            graph_list=graphs, true_labels=true_labels, dir_name=G2V_EMBEDDING_DIR
+        )
     time_g2v = time.time() - start_t_g2v
-    print(f'Graph2vec embeddings created in {time_g2v} seconds')
+    print(f"Graph2vec embeddings created in {time_g2v} seconds")
 
     # classification of graph2vec embeddings
     embeddings, true_labels = load_embeddings(dir_name=G2V_EMBEDDING_DIR)
     embeddings = np.squeeze(embeddings)
-    print('Number of labels: ', len(true_labels))
-    
-    print('\nPerforming classification on histogram approximation')
-    classification_train_acc, classification_test_acc = classification(embeddings, true_labels, GRAPH2VEC=True)
+    print("Number of labels: ", len(true_labels))
 
-    print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=True, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
+    print("\nPerforming classification on histogram approximation")
+    classification_train_acc, classification_test_acc = classification(
+        embeddings, true_labels, GRAPH2VEC=True
+    )
+
+    print("performing clustering on histogram approximation")
+    clustering_rand_score, clustering_error = clustering(
+        embeddings,
+        true_labels,
+        k=NUMBER_OF_CLUSTERS,
+        GRAPH2VEC=True,
+        n_eigenvectors=NUMBER_OF_EIGENVECTORS,
+    )
 
     if SWEEP:
-        wandb.log({
-            'g2v_class_train_accuracy': classification_train_acc, 
-                    'g2v_class_test_accuracy': classification_test_acc,
-                    'g2v_clustering_rand_score': clustering_rand_score,
-                    'g2v_clustering_error': clustering_error,
-                    'time_g2v': time_g2v})
-
+        wandb.log(
+            {
+                "g2v_class_train_accuracy": classification_train_acc,
+                "g2v_class_test_accuracy": classification_test_acc,
+                "g2v_clustering_rand_score": clustering_rand_score,
+                "g2v_clustering_error": clustering_error,
+                "time_g2v": time_g2v,
+            }
+        )
 
     start_t_graphons = time.time()
     # classification of graphon embeddings
-    print('creating histogram approximation of graphs')
-    hist_embeddings = histogram_embeddings(graphs, n0=N0) 
+    print("creating histogram approximation of graphs")
+    hist_embeddings = histogram_embeddings(graphs, n0=N0)
     embeddings = []
     for i in range(len(hist_embeddings)):
         flattened_emb = hist_embeddings[i].numpy().flatten()
         embeddings.append(flattened_emb)
     time_graphons = time.time() - start_t_graphons
-    print(f'Graphon embeddings created in {time_graphons} seconds')
+    print(f"Graphon embeddings created in {time_graphons} seconds")
 
-    print('\nPerforming classification on histogram approximation')
-    classification_train_acc, classification_test_acc = classification(embeddings, true_labels)
+    print("\nPerforming classification on histogram approximation")
+    classification_train_acc, classification_test_acc = classification(
+        embeddings, true_labels
+    )
 
-    print('performing clustering on histogram approximation')
-    clustering_rand_score, clustering_error = clustering(hist_embeddings, true_labels, k=NUMBER_OF_CLUSTERS, GRAPH2VEC=False, n_eigenvectors=NUMBER_OF_EIGENVECTORS)
+    print("performing clustering on histogram approximation")
+    clustering_rand_score, clustering_error = clustering(
+        hist_embeddings,
+        true_labels,
+        k=NUMBER_OF_CLUSTERS,
+        GRAPH2VEC=False,
+        n_eigenvectors=NUMBER_OF_EIGENVECTORS,
+    )
 
     if SWEEP:
-        wandb.log({
-                    'graphons_class_train_accuracy': classification_train_acc, 
-                    'graphons_class_test_accuracy': classification_test_acc,
-                    'graphons_clustering_rand_score': clustering_rand_score,
-                    'graphons_clustering_error': clustering_error,
-                    'time_graphons': time_graphons})
+        wandb.log(
+            {
+                "graphons_class_train_accuracy": classification_train_acc,
+                "graphons_class_test_accuracy": classification_test_acc,
+                "graphons_clustering_rand_score": clustering_rand_score,
+                "graphons_clustering_error": clustering_error,
+                "time_graphons": time_graphons,
+            }
+        )
 
 
-def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg_nodes=False):
+def graphon_mixup(
+    graphs, num_sample=20, n0=30, use_interpolation=False, use_avg_nodes=False
+):
     """
     Takes all the graphs of a specific class and generates new graphs by mixing them up.
 
@@ -149,15 +190,15 @@ def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg
         emb_size = int(np.mean([g.shape[0] for g in graphs]))
     else:
         emb_size = min([g.shape[0] for g in graphs])
-    
+
     graphs = [g for g in graphs if g.shape[0] >= emb_size]
 
     hist_approxs = histogram_embeddings(graphs, n0=emb_size)
     new_graphon = sum(hist_approxs) / len(hist_approxs)
     new_graphon = new_graphon.numpy()
 
-    u,s,v = np.linalg.svd(new_graphon)
-    singular_threshold = 0.02 * (30 ** 0.5)
+    u, s, v = np.linalg.svd(new_graphon)
+    singular_threshold = 0.02 * (30**0.5)
     binary_s = s < singular_threshold
     s[binary_s] = 0
     new_graphon = u @ np.diag(s) @ v.T
@@ -166,12 +207,16 @@ def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg
 
     if use_interpolation:
         new_dim = int(np.mean([g.shape[0] for g in graphs]))
-        new_graphon = cv.resize(new_graphon, (new_dim, new_dim), interpolation=cv.INTER_LINEAR)
-        
+        new_graphon = cv.resize(
+            new_graphon, (new_dim, new_dim), interpolation=cv.INTER_LINEAR
+        )
+
     new_graphs = []
 
     while len(new_graphs) < num_sample:
-        sample_graph = (np.random.rand(*new_graphon.shape) < new_graphon).astype(np.int32)
+        sample_graph = (np.random.rand(*new_graphon.shape) < new_graphon).astype(
+            np.int32
+        )
         sample_graph = np.triu(sample_graph)
         sample_graph = sample_graph + sample_graph.T - np.diag(np.diag(sample_graph))
         sample_graph = sample_graph[sample_graph.sum(axis=1) != 0]
@@ -182,7 +227,16 @@ def graphon_mixup(graphs, num_sample=20, n0=30, use_interpolation=False, use_avg
             new_graphs.append(A)
     return new_graphs
 
-def augment_dataset(graphs, true_labels, graphs_per_class=0, extra_graphs=None, n0=30, use_interpolation=True, use_avg_nodes=False):
+
+def augment_dataset(
+    graphs,
+    true_labels,
+    graphs_per_class=0,
+    extra_graphs=None,
+    n0=30,
+    use_interpolation=True,
+    use_avg_nodes=False,
+):
     """
     Augments the dataset by generating new graphs for each class.
 
@@ -196,7 +250,9 @@ def augment_dataset(graphs, true_labels, graphs_per_class=0, extra_graphs=None, 
     :rtype: ndarray, ndarray
     """
 
-    number_of_graphs = {f'{i}': len([x for x in true_labels if x == i]) for i in set(true_labels)}
+    number_of_graphs = {
+        f"{i}": len([x for x in true_labels if x == i]) for i in set(true_labels)
+    }
     # max_number_of_graphs = max(number_of_graphs.values())
 
     # select only graphs from a specific label
@@ -204,10 +260,18 @@ def augment_dataset(graphs, true_labels, graphs_per_class=0, extra_graphs=None, 
     new_labels = []
     if graphs_per_class != 0:
         for label in number_of_graphs.keys():
-            i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
+            i_graphs = [
+                graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)
+            ]
             num_sample = graphs_per_class - number_of_graphs[label]
             if num_sample > 0:
-                sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
+                sampled_graphs = graphon_mixup(
+                    i_graphs,
+                    num_sample=num_sample,
+                    n0=n0,
+                    use_interpolation=use_interpolation,
+                    use_avg_nodes=use_avg_nodes,
+                )
                 new_graphs.extend(sampled_graphs)
                 new_labels.extend([int(label)] * num_sample)
             elif num_sample < 0:
@@ -216,47 +280,52 @@ def augment_dataset(graphs, true_labels, graphs_per_class=0, extra_graphs=None, 
                 new_labels.extend([int(label)] * abs(graphs_per_class))
 
     if extra_graphs is not None:
-        for label in number_of_graphs.keys():
-            i_graphs = [graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)]
+        for label in ["1"]:
+            i_graphs = [
+                graphs[i] for i in range(len(graphs)) if true_labels[i] == int(label)
+            ]
             num_sample = extra_graphs
-            sampled_graphs = graphon_mixup(i_graphs, num_sample=num_sample, n0=n0, use_interpolation=use_interpolation, use_avg_nodes=use_avg_nodes)
+            sampled_graphs = graphon_mixup(
+                i_graphs,
+                num_sample=num_sample,
+                n0=n0,
+                use_interpolation=use_interpolation,
+                use_avg_nodes=use_avg_nodes,
+            )
             new_graphs.extend(sampled_graphs)
             new_labels.extend([int(label)] * num_sample)
     print(len(new_graphs))
 
     graphs = np.append(graphs, np.array(new_graphs))
     true_labels = np.append(true_labels, np.array(new_labels))
-    print(f'Augmented dataset now has {len(graphs)} graphs')
+    print(f"Augmented dataset now has {len(graphs)} graphs")
     return graphs.tolist(), true_labels.tolist()
 
 
 def sweep(config=None):
     with wandb.init(config=config):
-            clustering_classification(**wandb.config)
+        clustering_classification(**wandb.config)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # loads the config file
-    with open("config.yaml", 'r') as stream:
+    with open("config.yaml", "r") as stream:
         config_def = yaml.load(stream, Loader=yaml.FullLoader)
 
-    with open('sweep_config.yaml', 'r') as f:
-            sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
+    with open("sweep_config.yaml", "r") as f:
+        sweep_configuration = yaml.load(f, Loader=yaml.FullLoader)
     final_config = update_config(sweep_configuration, config_def)
 
     # if we are sweeping, we update the config with the default values and start the sweep
     # else we run the code using the config_def values
-    if config_def['SWEEP']:
+    if config_def["SWEEP"]:
         wandb.login()
-        sweep_id = wandb.sweep(sweep_configuration, project="graphon", entity='seb-graphon')
+        sweep_id = wandb.sweep(
+            sweep_configuration, project="graphon", entity="seb-graphon"
+        )
         wandb.agent(sweep_id, sweep)
     else:
         clustering_classification(**final_config)
-
-
-
-
-
 
 
 # %%
