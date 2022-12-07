@@ -232,7 +232,7 @@ class SynthGraphons:
 
         return graph_gen
 
-    def data_simulation(self, start=100, stop=1000):
+    def data_simulation(self, start=100, stop=600):
         """
         Simulate data_loader for the data_loader model
 
@@ -256,8 +256,8 @@ class SynthGraphons:
             self.graphs = self.graphs + g
 
         for i in range(len(self.graphons_keys)):
-            _label = i * np.ones(self.num_graphs)
-            self.labels = self.labels + _label.tolist()
+            _label = int(i) * np.ones(self.num_graphs)
+            self.labels = self.labels + _label.astype(int).tolist()
 
         return self.graphs, self.labels
 
@@ -282,15 +282,14 @@ class SynthGraphons:
             graphs, labels = pickle.load(f)
         return graphs, labels
 
-    @staticmethod
-    def plot_graphons(key):
+    def plot_graphons(self, key):
         """
         Plot the data_loader functions
 
         :param key: the key of the data_loader function
         :type key: int
 
-        :return: Nothing
+        :return: Noothing
         :rtype: None
         """
         x = torch.linspace(0, 1, 1000)
@@ -302,4 +301,25 @@ class SynthGraphons:
         plt.title('Graphon ' + str(key) + f' --> ({func_name})')
         plt.imshow(y, cmap='hot', interpolation='nearest')
         plt.colorbar()
-        plt.show()
+        # plt.show()
+        # save the plot as png
+        plt.savefig('graphon_' + str(key) + '.png')
+
+
+    def graphons_plot(self):
+        # plot all the graphons using 2 rows of subplots and adding a single colorbar
+        fig, axs = plt.subplots(2, 5, figsize=(20, 10))
+        fig.subplots_adjust(right=0.8)
+        cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+        for i in range(1, 11):
+            x = torch.linspace(0, 1, 1000)
+            p = torch.zeros((x.shape[0], x.shape[0]), dtype=torch.float64).to(device=DEVICE)
+            u = p + x.reshape(1, -1)
+            v = p + x.reshape(-1, 1)
+            y = eval('self.graphon_' + str(i) + '(u, v)')
+            func_name = eval('self.graphon_' + str(i) + '.__doc__').split('\n')[1].lstrip()
+            axs[(i - 1) // 5, (i - 1) % 5].set_title('Graphon ' + str(i))
+            im = axs[(i - 1) // 5, (i - 1) % 5].imshow(y, cmap='hot', interpolation='nearest')
+        fig.colorbar(im, cax=cbar_ax)
+        fig.savefig('graphons.png')
+        # plt.show()

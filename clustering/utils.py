@@ -20,7 +20,7 @@ def make_cost_m(conf_matrix):
     return - conf_matrix + s
 
 
-def error(gt_real, labels):
+def hungarian_error(gt_real, labels):
     """
     Hungarian algorithm for error calculation
 

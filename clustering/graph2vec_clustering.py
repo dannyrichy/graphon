@@ -3,11 +3,12 @@ Contains functions related to graph2vec clustering
 """
 from sklearn.cluster import KMeans
 from sklearn.metrics import adjusted_rand_score
+from sklearn.cluster import SpectralClustering
 
-from clustering.utils import error
+from clustering.utils import hungarian_error
 
 
-def graph2vec_clustering(li_emb, true_labels, k):
+def graph2vec_clustering(li_emb, true_labels, k, no_eig_vecs=2):
     """
     K means clustering method for graph embeddings
 
@@ -23,12 +24,14 @@ def graph2vec_clustering(li_emb, true_labels, k):
     :return: Train metrics
     :rtype: tuple
     """
-    KM = KMeans(n_clusters=k)
-    KM.fit(li_emb)
-
-    labels = KM.labels_
+    # KM = KMeans(n_clusters=k)
+    # KM.fit(li_emb)
+    SC = SpectralClustering(n_clusters=k, n_components=no_eig_vecs, affinity='nearest_neighbors')
+    SC.fit(li_emb)
+    
+    labels = SC.labels_
 
     rand_idx_g2v = adjusted_rand_score(true_labels, labels)
-    frac_err_g2v = error(true_labels, labels)
+    frac_err_g2v = hungarian_error(true_labels, labels)
 
-    return frac_err_g2v, rand_idx_g2v
+    return rand_idx_g2v, frac_err_g2v
