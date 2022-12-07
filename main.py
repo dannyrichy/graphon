@@ -24,7 +24,7 @@ from utils import (
 
 def clustering_classification(
     NUM_GRAPHS_PER_GRAPHON=100,
-    NUM_NODES=None,
+    NUM_NODES='None',
     N0=30,
     SAVE_GRAPHONS=False,
     CREATE_EMBEDDINGS=False,
@@ -95,17 +95,23 @@ def clustering_classification(
             graph_list=graphs, true_labels=true_labels, dir_name=G2V_EMBEDDING_DIR
         )
     time_g2v = time.time() - start_t_g2v
+
     print(f"Graph2vec embeddings created in {time_g2v} seconds")
+
 
     # classification of graph2vec embeddings
     embeddings, true_labels = load_embeddings(dir_name=G2V_EMBEDDING_DIR)
     embeddings = np.squeeze(embeddings)
+
     print("Number of labels: ", len(true_labels))
+    print('Number of labels: ', len(true_labels))
+
 
     print("\nPerforming classification on histogram approximation")
     classification_train_acc, classification_test_acc = classification(
         embeddings, true_labels, GRAPH2VEC=True
     )
+
 
     print("performing clustering on histogram approximation")
     clustering_rand_score, clustering_error = clustering(
